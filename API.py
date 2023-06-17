@@ -54,6 +54,34 @@ async def init(request: Request, number: str = Form(), recipient: str = Form(), 
 
 
     # redirect to call page
+    return RedirectResponse(f"/questions/{call_id}", status_code=303)
+
+
+
+@app.get("/questions/{call_id}", response_class=HTMLResponse)
+async def questions(request: Request, call_id: str):
+    '''
+    Page to view call history
+    '''
+    return TEMPLATES.TemplateResponse(
+        "questions.html",
+        {
+            "request": request,
+            "call_id": call_id
+        }
+    )
+
+
+@app.post("/questions", response_class=HTMLResponse)
+async def questions(request: Request, call_id: str = Form()):
+    '''
+    Page to view call history
+    '''
+    # verify responses are valid
+
+    # save to db
+
+
     return RedirectResponse(f"/call/{call_id}", status_code=303)
 
 
@@ -72,14 +100,15 @@ async def call(request: Request, call_id: str):
     )
 
 
-@app.get("/history", response_class=HTMLResponse)
+@app.get("/account", response_class=HTMLResponse)
 async def history(request: Request):
     '''
     Page to view call history
     '''
     return TEMPLATES.TemplateResponse(
-        "history.html",
+        "account.html",
         {
             "request": request,
         }
     )
+
