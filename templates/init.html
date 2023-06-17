@@ -7,7 +7,7 @@
         <!-- call container -->
         <div class="center-mini">
             <h4 class="mb-3 call-icon"><ion-icon name="call-outline"></ion-icon></h4>
-            <form>
+            <form action="/init_call" method="POST">
                 <div class="form-floating mb-3">
                     <input type="tel" class="form-control" id="number" name="number" placeholder="1234567890" required>
                     <label for="number">Phone Number</label>
@@ -17,7 +17,7 @@
                     <label for="recipient">Recipient</label>
                 </div>
                 <div class="mb-3">
-                    <textarea class="form-control" id="exampleFormControlTextarea1" rows="5" placeholder="Context" required></textarea>
+                    <textarea class="form-control" id="exampleFormControlTextarea1" rows="5" name="context" placeholder="Context" required></textarea>
                 </div>
                 <button type="submit" class="btn btn-outline-dark">Call</button>
             </form>
@@ -28,21 +28,21 @@
         <div class="center-full">
             <div class="scroll-y">
                 <div class="row row-cols-1 row-cols-md-1">
-                    {% for i in range(5) %}
+                    {% for i in phonebook %}
                     <div class="col d-flex">
                       <div class="phone-card">
                         <div class="row">
                             <div class="col-2">
-                                <div class="profile-photo">AJ</div>
+                                <div class="profile-photo">{{i.recipient[0]|title}}</div>
                             </div>
                             <div class="col-7">
                                 <div class="card-body">
-                                    <h5 class="card-title">Card title</h5>
-                                    <p class="card-text">2/12/23</p>  
+                                    <h5 class="card-title">{{i.recipient|title}}</h5>
+                                    <p class="card-text">{{i.phone_number}}</p>  
                                 </div>
                             </div>
                             <div class="col-3">
-                                <button type="button" class="btn btn-outline-dark phone-btn">Call</button>
+                                <button type="button" class="btn btn-outline-dark phone-btn" onclick="copy_contact('{{i.recipient|title}}', '{{i.phone_number}}')">Next</button>
                             </div>
                         </div>
                       </div>
@@ -53,6 +53,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    function copy_contact(recipient, number) {
+        document.getElementById("number").value = number;
+        document.getElementById("recipient").value = recipient;
+    }
+</script>
 
 
 {% endblock %}
