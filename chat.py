@@ -48,17 +48,24 @@ class Interaction():
         self.messages = []
         self.messages.append({"role": "system", "content": self.agent_description})
     
-    def __call__(self):
+    def __call__(self, response=None):
         # Initialize the agent
         self.set_agent_config()
         
-        # While the conversation is still continuing
-        while True:
-            customer_service_response = input("Customer Service Agent: ")
+        def step(customer_service_response):
             self.messages.append({"role": "user", "content": self.engineer_prompt(customer_service_response)})
             response = self.chat()
             print("BlueberryAI: ", response.content)
             self.messages.append(response)
+            return response.content
+        
+        # While the conversation is still continuing
+        if response is None:
+            while True:
+                customer_service_response = input("Customer Service Agent: ")
+                step(customer_service_response)
+        else:
+            return step(response)
             
     def engineer_prompt(self, customer_service_response):
         """Generates the prompt for the engineer to respond to.
