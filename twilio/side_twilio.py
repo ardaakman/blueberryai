@@ -2,17 +2,22 @@ from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse
 import time
 import openai
+import os
+from dotenv import load_dotenv
+
+# Load the variables from the .env file
+load_dotenv()
 
 # Set up Twilio client
-account_sid = 'YOUR_TWILIO_ACCOUNT_SID'
-auth_token = 'YOUR_TWILIO_AUTH_TOKEN'
-twilio_phone_number = 'YOUR_TWILIO_PHONE_NUMBER'
-recipient_phone_number = 'RECIPIENT_PHONE_NUMBER'
+account_sid = os.getenv('SID')
+auth_token = os.getenv('TWILIO_AUTH')
+twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
+recipient_phone_number = os.getenv('RECIPIENT_PHONE_NUMBER')
 
 client = Client(account_sid, auth_token)
 
 # Set up OpenAI
-openai.api_key = 'YOUR_OPENAI_API_KEY'
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Function to generate response using OpenAI
 def generate_response(prompt):
