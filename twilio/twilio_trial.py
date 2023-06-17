@@ -57,6 +57,21 @@ def inbound_call():
         logger.error("Error during inbound call:", exc_info=True)
         return str(e)
 
+@app.route("/handle_recording", methods=['POST'])
+def handle_recording():
+    print("Dealing with recordings")
+    recording_url = request.values.get('RecordingUrl', None)
+
+    # Now you can use the 'recording_url' to download and save the file locally,
+    # or store the URL somewhere to access the recording later.
+    # For example, let's just print it:
+    print("Recording URL: " + recording_url)
+
+    resp = VoiceResponse()
+    resp.say("Thank you for your message. Goodbye.")
+    return str(resp)
+
+
 @app.route("/process_speech", methods=['POST'])
 def process_speech():
     try:
@@ -72,8 +87,10 @@ def process_speech():
         else:
             resp.say("I did not understand. Please say it again.")
             gather = Gather(input='speech', action='/process_speech')
-            gather.play('https://s3.us-west-1.wasabisys.com/simulator/OfkDUtaSXL4wuKkbbup2BEeiy.mp3')
+            gather.play('https://storage.googleapis.com/fliki/media/api/642f37f4bac5767aff0b07bc/6467540cd30647acad0d8897.mp3')
+            print("Done with response. Moving onto input.")
             resp.append(gather)
+            resp.record(maxLength="30", action="/handle_recording")
 
         return str(resp)
     except Exception as e:
