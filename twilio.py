@@ -2,9 +2,15 @@ from flask import Flask, request
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Gather
 
+# Use the .env file
+from dotenv import dotenv_values
+
+# Load the variables from the .env file
+env_vars = dotenv_values()
+
 # Twilio account credentials
-account_sid = 
-auth_token = 
+account_sid = env_vars['ACCOUNT_SID']
+auth_token = env_vars["AUTH_TOKEN"]
 client = Client(account_sid, auth_token)
 
 app = Flask(__name__)
