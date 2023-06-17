@@ -1,5 +1,58 @@
-{% extend 'base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
-    <h1>Home</h1>
+
+<div class="row">
+    <div class="col">
+        <!-- call container -->
+        <div class="center-mini">
+            <h4 class="mb-3 call-icon"><ion-icon name="call-outline"></ion-icon></h4>
+            <form>
+                <div class="form-floating mb-3">
+                    <input type="tel" class="form-control" id="number" name="number" placeholder="1234567890" required>
+                    <label for="number">Phone Number</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="recipient" name="recipient" placeholder="recipient" required> 
+                    <label for="recipient">Recipient</label>
+                </div>
+                <div class="mb-3">
+                    <textarea class="form-control" id="exampleFormControlTextarea1" rows="5" placeholder="Context" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-outline-dark">Call</button>
+            </form>
+        </div>
+    </div>
+    <div class="col">
+        <!-- history container -->
+        <div class="center-full">
+            <div class="scroll-y">
+                <div class="row row-cols-1 row-cols-md-1">
+                    {% for i in range(5) %}
+                    <div class="col d-flex">
+                      <div class="phone-card">
+                        <div class="row">
+                            <div class="col-2">
+                                <div class="profile-photo">AJ</div>
+                            </div>
+                            <div class="col-7">
+                                <div class="card-body">
+                                    <h5 class="card-title">Card title</h5>
+                                    <p class="card-text">2/12/23</p>  
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <button type="button" class="btn btn-outline-dark phone-btn">Call</button>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}

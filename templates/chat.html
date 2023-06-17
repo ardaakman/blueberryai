@@ -1,5 +1,55 @@
-{% extend 'base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
-    <h1>Home</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="center-menu">
+            <div class="phone-heading">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="card-body">
+                            <h5 class="card-title">Card title</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="mb-3">
+                <label for="exampleFormControlTextarea1" class="form-label">Message</label>
+                <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+            </div>
+            <button type="button" class="btn btn-primary mb-3">Send</button>
+            <button type="button" class="btn btn-danger mb-3">End Call</button>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
+                <label class="form-check-label" for="flexSwitchCheckDefault">Enable Auto Send</label>
+            </div>    
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="center-chat">
+            <div class="chat">
+                {% for i in range(10) %}
+                {% if i % 2 == 0 %}
+                    <div class="chat-caller chat-bubble">
+                        <div class="chat-text">
+                            <p>Hi</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="chat-callee chat-bubble">
+                        <div class="chat-text">
+                            <p>Hi</p>
+                        </div>
+                    </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
 {% endblock %}
