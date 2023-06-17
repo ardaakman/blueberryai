@@ -44,11 +44,11 @@ def handle_incoming_call():
 def convert_speech_to_text(recording_url):
     url = "https://api.hume.ai/v0/batch/jobs"
 
-    payload = "{\"models\":{\"face\":{\"fps_pred\":3,\"prob_threshold\":0.99,\"identify_faces\":false,\"min_face_size\":60,\"save_faces\":false},\"prosody\":{\"granularity\":\"utterance\",\"identify_speakers\":false,\"window\":{\"length\":4,\"step\":1}},\"language\":{\"granularity\":\"word\",\"identify_speakers\":false},\"ner\":{\"identify_speakers\":false}},\"transcription\":{\"language\":null},\"notify\":false}"
+    payload = "{\"models\":{\"face\":{\"fps_pred\":3,\"prob_threshold\":0.99,\"identify_faces\":false,\"min_face_size\":60,\"save_faces\":false},\"prosody\":{\"granularity\":\"utterance\",\"identify_speakers\":false,\"window\":{\"length\":4,\"step\":1}},\"language\":{\"granularity\":\"word\",\"identify_speakers\":false},\"ner\":{\"identify_speakers\":false}},\"transcription\":{\"language\":null}," + "\"urls\":[\"" + recording_url + "\"],\"notify\":false}"
     headers = {
         "accept": "application/json; charset=utf-8",
         "content-type": "application/json; charset=utf-8",
-        "X-Hume-Api-Key": hume_api_key
+        "X-Hume-Api-Key": "BRlltt9gz2pChEvFQLC38mvEe8jGOoAHuZd4lKeY9vZqydZH"
     }
 
     response = requests.post(url, data=payload, headers=headers)
