@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Set up Twilio client
-account_sid = os.getenv('SID')
-auth_token = os.getenv('TWILIO_AUTH')
+account_sid = os.getenv('ACCOUNT_SID')
+auth_token = os.getenv('AUTH_TOKEN')
 twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
 recipient_phone_number = os.getenv('RECIPIENT_PHONE_NUMBER')
 
