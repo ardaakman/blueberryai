@@ -1,5 +1,7 @@
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse
+
+import requests
 import time
 import openai
 import os
@@ -13,6 +15,7 @@ account_sid = os.getenv('ACCOUNT_SID')
 auth_token = os.getenv('AUTH_TOKEN')
 twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
 recipient_phone_number = os.getenv('RECIPIENT_PHONE_NUMBER')
+hume_api_key = os.getenv('HUME_API_KEY')
 
 client = Client(account_sid, auth_token)
 
@@ -37,6 +40,20 @@ def handle_incoming_call():
     response.say("Hello, how can I assist you?")
     response.record(max_length=30, action='/process_recording')
     return str(response)
+
+def convert_speech_to_text(recording_url):
+    url = "https://api.hume.ai/v0/batch/jobs"
+
+    payload = "{\"models\":{\"face\":{\"fps_pred\":3,\"prob_threshold\":0.99,\"identify_faces\":false,\"min_face_size\":60,\"save_faces\":false},\"prosody\":{\"granularity\":\"utterance\",\"identify_speakers\":false,\"window\":{\"length\":4,\"step\":1}},\"language\":{\"granularity\":\"word\",\"identify_speakers\":false},\"ner\":{\"identify_speakers\":false}},\"transcription\":{\"language\":null},\"notify\":false}"
+    headers = {
+        "accept": "application/json; charset=utf-8",
+        "content-type": "application/json; charset=utf-8",
+        "X-Hume-Api-Key": hume_api_key
+    }
+
+    response = requests.post(url, data=payload, headers=headers)
+
+    print(response.text)
 
 # Function to process the recording and generate a response
 def process_recording(recording_url):
