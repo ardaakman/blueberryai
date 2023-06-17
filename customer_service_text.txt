@@ -1,0 +1,1 @@
+Welcome to People's Gas Account. If you are an existing customer, please enter your 9-digit people's gas account number. If you're a new customer wanting to open an account, say "Open New Account"
