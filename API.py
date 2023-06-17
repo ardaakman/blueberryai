@@ -30,9 +30,10 @@ async def call(request: Request, call_id: str):
     Page to view ongoinng call
     '''
     return TEMPLATES.TemplateResponse(
-        "call.html",
+        "chat.html",
         {
             "request": request,
+            "page": "call",
         }
     )
 
