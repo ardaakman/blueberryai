@@ -1,14 +1,22 @@
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse
-
+from flask import Flask, request
 import requests
 import time
+import json
 import openai
 import os
 from dotenv import load_dotenv
 
+import sys
+sys.path.append('../')  # Add the parent directory to the system path
+from chat import Interaction
+
 # Load the variables from the .env file
 load_dotenv()
+
+# Initialize Flask app
+app = Flask(__name__)
 
 # Set up Twilio client
 account_sid = os.getenv('ACCOUNT_SID')
@@ -16,23 +24,12 @@ auth_token = os.getenv('AUTH_TOKEN')
 twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
 recipient_phone_number = os.getenv('RECIPIENT_PHONE_NUMBER')
 hume_api_key = os.getenv('HUME_API_KEY')
+fliki_api_key = os.getenv('FLIKI_API_KEY')
 
 client = Client(account_sid, auth_token)
 
 # Set up OpenAI
 openai.api_key = os.getenv('OPENAI_API_KEY')
-
-# Function to generate response using OpenAI
-def generate_response(prompt):
-    response = openai.Completion.create(
-        engine='text-davinci-003',
-        prompt=prompt,
-        max_tokens=50,
-        temperature=0.7,
-        n=1,
-        stop=None
-    )
-    return response.choices[0].text.strip()
 
 # Function to handle incoming call
 def handle_incoming_call():
@@ -48,12 +45,11 @@ def convert_speech_to_text(recording_url):
     headers = {
         "accept": "application/json; charset=utf-8",
         "content-type": "application/json; charset=utf-8",
-        "X-Hume-Api-Key": "BRlltt9gz2pChEvFQLC38mvEe8jGOoAHuZd4lKeY9vZqydZH"
+        "X-Hume-Api-Key": hume_api_key
     }
 
     response = requests.post(url, data=payload, headers=headers)
-
-    print(response.text)
+    return response.text
 
 # Function to process the recording and generate a response
 def process_recording(recording_url):
@@ -62,37 +58,51 @@ def process_recording(recording_url):
     recipient_message = convert_speech_to_text(recording_url)
 
     # Generate a response using OpenAI
-    prompt = "Recipient said: " + recipient_message
-    generated_response = generate_response(prompt)
+    generated_response = interaction(recipient_message)
 
-    # Save the generated response as an audio file
-    audio_filename = 'generated_response.mp3'
-    save_generated_response_as_audio(generated_response, audio_filename)
+    # Save the generated response as an audio url
+    audio_url = save_generated_response_as_audio(generated_response)
 
     # Respond to the recipient with the generated answer
     response = VoiceResponse()
-    response.play(audio_filename)
+    response.play(audio_url)
     response.record(max_length=30, action='/process_recording')
     return str(response)
 
 # Function to save the generated response as an audio file
-def save_generated_response_as_audio(generated_response, filename):
-    # Convert the generated response to audio and save it as the specified filename
-    # Here, you will need to use a suitable text-to-speech library or service to convert the text to audio
-    # Ensure that the audio file is saved with the .mp3 extension
+def save_generated_response_as_audio(generated_response):
+    conversational_style_id = "6434632c9f50eacb088edafd"
+    marcus_speaker_id = "643463179f50eacb088edaec"
 
-    # Example code using the pyttsx3 library
-    import pyttsx3
-    engine = pyttsx3.init()
-    engine.save_to_file(generated_response, filename)
-    engine.runAndWait()
+    url = "https://api.fliki.ai/v1/generate/text-to-speech"
+    headers = {
+        "Authorization": f"Bearer {fliki_api_key}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "content": generated_response,
+        "voiceId": marcus_speaker_id,
+        "voiceStyleId": conversational_style_id
+    }
+    
+    response = requests.post(url, headers=headers, json=data)
 
-# Create a Twilio call
-call = client.calls.create(
-    twiml=handle_incoming_call(),
-    to=recipient_phone_number,
-    from_=twilio_phone_number
-)
+    # Check the response status code
+    if response.status_code == 200:
+        # Process the response
+        audio_data = response.content
+        # Do something with the audio data
+        response_dict = json.loads(audio_data)
+
+        # Now you can access the dictionary elements
+        success = response_dict["success"]
+        audio_url = response_dict["data"]["audio"]
+        duration = response_dict["data"]["duration"]
+        
+        return audio_url
+    else:
+        # Handle the error
+        raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
 
 # Twilio webhook to process the recording and generate a response
 @app.route('/process_recording', methods=['POST'])
@@ -104,3 +114,14 @@ def process_recording_webhook():
 # Start the Flask server to listen for incoming requests
 if __name__ == '__main__':
     app.run()
+    
+    # Create a Twilio call
+    call = client.calls.create(
+        twiml=handle_incoming_call(),
+        to=recipient_phone_number,
+        from_=twilio_phone_number
+    )
+    
+    interaction = Interaction(task="create a new account", context_directory="../data/ekrem/")
+    interaction.recipient = "People's Gas"
+
