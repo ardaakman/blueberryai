@@ -1,9 +1,10 @@
-from llama_index import VectorStoreIndex, SimpleDirectoryReader
-
 import os
 import openai
-os.environ["OPENAI_API_KEY"] = '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'
-openai.api_key = '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'
+from dotenv import load_dotenv
+
+load_dotenv()
+openai.api_key = os.getenv('OPENAI_API_KEY')
+print(openai.api_key)
 
 class Interaction():
     def __init__(self, task, context_directory):
@@ -93,9 +94,9 @@ class Interaction():
         )
         return completion.choices[0].message
 
-# interaction = Interaction(task="create a new account", context_directory="data/ekrem/")
-# interaction.recipient = "People's Gas"
-# interaction()
+interaction = Interaction(task="create a new account", context_directory="./twilio")
+interaction.recipient = "People's Gas"
+interaction()
 
 # data = SimpleDirectoryReader(input_dir="data/ekrem/").load_data()
 

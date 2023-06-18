@@ -43,7 +43,7 @@ def conversation():
     try:
         resp = VoiceResponse()
         resp.say("Hi, tell us the problem!")
-        resp.record(maxLength="30", action="/handle_recording")
+        resp.record(maxLength="30", action="/handle_recording", playBeep=False, timeout="5", finishOnKey="#")
         return str(resp)
     except Exception as e:
         logger.error("Error during conversation:", exc_info=True)
@@ -75,12 +75,27 @@ def handle_recording():
     upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "calhacksaudio")
     resp= VoiceResponse()
     resp.say("Give me one moment please.")
-    resp.pause(5)
-    # Now you can use the 'recording_url' to download and save the file locally,
-    # or store the URL somewhere to access the recording later.
-    # For example, let's just print it:
-    resp.say("Thank you for your message. Goodbye.", action='/conversation')
+    resp.redirect('/ending')
+    #Try using the recording url from wasabi to create a response.
+
     return str(resp)
+
+@app.route("/ending", methods=['POST'])
+def ending():
+    try:
+        resp = VoiceResponse()
+        #fetch wasabi stuff and do recording.
+        url_to_play = process_recording("https://s3.us-west-1.wasabisys.com/calhacksaudio/output_0.mp3")
+        print(url_to_play)
+        resp.play(url_to_play)
+        resp.say("Thank you for your time! Have a wonderful day.")
+    
+    except Exception as e:
+        logger.error("Error during ending:", exc_info=True)
+        return str(e)
+
+        
+
 
 
 # Below here is mostly for testing stuff out.
