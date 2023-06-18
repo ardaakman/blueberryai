@@ -146,3 +146,11 @@ def save_generated_response_as_audio(generated_response):
     else:
         # Handle the error
         raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
+    
+    
+def post_to_client(message, sender):
+    url = "http://127.0.0.1:8201/post_to_client"
+    data = {"message": message, "sender": sender}
+    requests.post(url, data=data)
+
+

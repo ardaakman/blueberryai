@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import FastAPI, APIRouter, Request, Form, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, APIRouter, Request, Form, WebSocket, WebSocketDisconnect, BackgroundTasks
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
@@ -8,6 +8,8 @@ from fastapi.websockets import WebSocket
 from pathlib import Path
 from utils import *
 import json
+import requests
+import httpx
 
 app = FastAPI()
 
@@ -16,6 +18,15 @@ BASE_PATH = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory="static"), name="static")
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 USER_ID = 1
+
+async def make_http_request(url: str, data: dict):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, data=data)
+    return response
+
+@app.get("/favicon.ico")
+async def get_favicon():
+    return FileResponse("static/favicon.ico")
 
 @app.get("/", response_class=HTMLResponse)
 async def init(request: Request):
@@ -96,6 +107,20 @@ async def call(request: Request, call_id: str):
     Page to view ongoinng call
     ''' 
     # initiate call [TODO]
+    url = 'http://127.0.0.1:8000/start_call'
+
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT phone_number FROM call_log WHERE id = ?", (call_id,))
+        call = cur.fetchone()
+
+    data = {
+        'call_id': call_id,
+        'phone_number': call[0]
+    }
+    
+    # Add the request function to the background tasks
+    background_tasks.add_task(make_http_request, url, data)
 
     return TEMPLATES.TemplateResponse(
         "chat.html",
@@ -105,6 +130,14 @@ async def call(request: Request, call_id: str):
             'call_id': call_id
         }
     )
+
+@app.post("/post_to_client")
+def post_to_client(data):
+    '''
+    Send data to client
+    '''
+    send_data_to_clients(data)
+
 
 # SOCKETS
 sockets = []

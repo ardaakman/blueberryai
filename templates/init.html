@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="row">
-    <div class="col">
+    <div class="col-md-8">
         <!-- call container -->
         <div class="center-mini">
             <h4 class="mb-3 call-icon"><ion-icon name="call-outline"></ion-icon></h4>
@@ -23,7 +23,7 @@
             </form>
         </div>
     </div>
-    <div class="col">
+    <div class="col-md-4">
         <!-- history container -->
         <div class="center-full">
             <div class="scroll-y">
@@ -42,7 +42,7 @@
                                 </div>
                             </div>
                             <div class="col-3">
-                                <button type="button" class="btn btn-outline-dark phone-btn" onclick="copy_contact('{{i.recipient|title}}', '{{i.phone_number}}')">Next</button>
+                                <button type="button" class="btn-outline-light phone-btn" onclick="copy_contact('{{i.recipient|title}}', '{{i.phone_number}}')"><ion-icon name="call-outline"></ion-icon></button>
                             </div>
                         </div>
                       </div>

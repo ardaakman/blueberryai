@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 for file in os.listdir(os.path.join(CURRENT_DIR, "outputs")):
     os.remove(os.path.join(CURRENT_DIR, "outputs", file))
 
-@app.route("/outbound", methods=['GET'])
+@app.route("/start_call", methods=['POST'])
+# @app.route("/outbound", methods=['GET'])
 def outbound_call():
     try:
         logger.info("Outbound call initiated.")
@@ -114,6 +115,7 @@ def handle_ending():
         logger.error("Error during ending:", exc_info=True)
 # Below here is mostly for testing stuff out.
 
+
 @app.route("/inbound", methods=['POST'])
 def inbound_call():
     try:
@@ -124,9 +126,6 @@ def inbound_call():
         return str(resp)
     except Exception as e:
         logger.error("Error during inbound call:", exc_info=True)
-        return str(e)
-
-
         return str(e)
 
 if __name__ == "__main__":

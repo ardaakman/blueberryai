@@ -7,7 +7,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Inter', sans-serif;
-    overflow:hidden
+    overflow:hidden;
 
 }
 
@@ -42,25 +42,6 @@ body {
     margin-top:5rem;
 }
 
-.center-mini {
-    width:70%;
-    margin:0 auto;
-    height:60vh;
-    background-color: white;
-    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    padding:2rem;
-    overflow: hidden;
-    margin-top:10rem;
-}
-
-.center-full {
-    width:100%;
-    height:100vh;
-    background-color: #ecbcfd;
-    padding:2rem;
-    overflow: hidden;
-}
 
 .center-white {
     width:100%;
@@ -152,16 +133,38 @@ body {
     width:90%;
 }
 
+.center-full {
+    width:100%;
+    height:100vh;
+    /* background-color: #abc4ff; */
+    padding:2rem;
+    overflow: hidden;
+}
+
+.center-mini {
+    width:50%;
+    margin:0 auto;
+    height:60vh;
+    background-color: white;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding:2rem;
+    overflow: hidden;
+    margin-top:10rem;
+}
+
 .phone-card {
-    background:transparent;
+    background-color:#16347b;
+    backdrop-filter: blur(10px);
+    border-radius: 4px;
+    color:white;
+    margin:.5rem;
     padding:1rem;
-    margin:0rem;
     width: 100%;
 }
 
 .phone-heading {
     background:transparent;
-    /* padding:1rem; */
     margin:0rem;
     width: 100%;
 }
@@ -171,7 +174,7 @@ body {
     overflow-x: hidden;
     padding:1rem;
     max-height:70vh;
-    width:70%;
+    width:100%;
     margin:0 auto;
     margin-top:5rem
 }
@@ -182,7 +185,10 @@ body {
 } 
 
 .card-text {
-    color:rgb(69, 69, 69);
+    color:white;
+    font-size:.8rem;
+    letter-spacing: 2px;
+    font-weight: 100;
 }
 
 .profile-photo {
@@ -191,8 +197,9 @@ body {
     text-align: center;
     line-height: 3rem;
     border-radius: 50%;
-    background-color: #ffffff;
-    border: 1px solid #ffffff;
+    color:rgb(0, 0, 0);
+    background-color: #fff;
+    /* border: 1px solid #ffffff; */
 }
 
 .card-body {
@@ -201,7 +208,22 @@ body {
 }
 
 .phone-btn {
-    float:right
+    float:right;
+    border-radius: 50% !important;
+    background: transparent;
+    color:rgb(103, 103, 103);
+    height:3rem;
+    width:3rem;
+    font-size:1.5rem;
+    padding:0px !important;
+    margin:0px !important;
+    line-height: 3rem;
+    border:1px solid rgb(103, 103, 103);
+}
+
+.phone-btn:hover {
+    border:1px solid rgb(255, 255, 255);
+    color:#ffffff;
 }
 
 .nav-link:hover {
