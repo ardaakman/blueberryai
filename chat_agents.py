@@ -147,7 +147,9 @@ Here are some tips when responding to the customer service agent:
 - Your response should be to the point and succint. 
 - Long answers are penalized.
 - Give personal information only when asked.
-- Represent numbers as digits with spaces in between. Like 5032 should be 5 0 3 2.
+- Represent numbers as digits with spaces in between. Like 5032 should be 5 0 3 2. For example:
+    - Instead of writing "64 Montgomery Drive, Pittsford NY 15289", write "6 4 Montgomery Drive, Pittsford NY 1 5 2 8 9"
+    - Instead of writing "my phone number is 585-321-5352", write "my phone number is 5 8 5 3 2 1 5 3 5 2."
 - If the agent asks for you to spell something out, you should respond with letters seperated by spaces. Like A P P L E. Examples include:
     - Customer support: Can you spell your name for me?
     - Agent response: A R V I D and then K J E L B E R G.
