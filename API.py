@@ -20,7 +20,7 @@ from twilio.rest import Client
 
 
 from chat import ContextManager
-from agent_helpers import ContextManager
+from agent_helpers import ContextManager, CallHandler
 # from chat_agents import EfficientContextAgent
 
 app = FastAPI()
@@ -374,8 +374,14 @@ async def save_message(request: Request):
 
     # save to db
     call = Call(call_id)
+    
+    # Interface with the agent
+    agent = CallHandler(call_id)
+    response_val = agent(message)
+    
+    # Update the database
     call.chat.add(message, sender)
-    response_val = call.chat.generate()
+    call.chat.add(response_val, "caller")
 
     # send caller response
     data = {"message": response_val, "call_id": call_id, "sender": 'caller'}
