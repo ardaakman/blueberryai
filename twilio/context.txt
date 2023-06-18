@@ -4,7 +4,7 @@ Hey I want to create a new account with People's Gas company.
 Personal Information:
 SSN = 123-45-678
 Name = Ekrem Korkmaz
-Date of birth = 03/02/2001
+Date of birth = May 3rd, 2022
 Phone number = 412 608 4757
 Email address = ekrem.korkmaz@gmail.com
 Home Address = 5032 Forbes Ave, SMC 1000, Pittsburgh PA 15289
