@@ -2,7 +2,8 @@
 window.onload = function() {
     // get call id from url
     // show grayMessage
-    grayMessage("Chat started with ..");
+    const recipient = document.getElementById("recipient").innerText;
+    grayMessage("Chat started with " + recipient);
 }
 
 socket = new WebSocket(`ws://localhost:8201/websocket`);

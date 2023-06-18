@@ -9,7 +9,7 @@
                 <div class="row">
                     <div class="col-7">
                         <div class="card-body">
-                            <h5 class="card-title">Card title</h5>
+                            <h5 class="card-title" id="recipient">{{recipient|title}}</h5>
                         </div>
                     </div>
                 </div>
@@ -26,7 +26,7 @@
             </div>
             {% endfor %}
             <div style="position: absolute;bottom:1rem">
-                <button type="button" class="btn btn-primary mb-3" onclick="saveInfo()">Save</button>
+                <button type="button" class="btn btn-primary mb-3" onclick="saveInfo()">Update Info</button>
                 <button type="button" class="btn btn-danger mb-3" onclick="endCall()">End Call</button>
              </div>
             <!-- <div class="form-check form-switch">

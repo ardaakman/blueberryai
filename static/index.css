@@ -61,6 +61,7 @@ body {
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     padding:2rem;
+    position:relative;
     margin-top:5rem;   
 }
 
@@ -98,7 +99,7 @@ body {
     width:90%;
     margin: 0 auto;
     margin-top:1rem;
-    background-color: rgb(223, 223, 223);
+    background-color: rgb(241, 241, 241);
     border-radius: 4px;
     padding:.6rem;
 }

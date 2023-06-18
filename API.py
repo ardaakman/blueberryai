@@ -250,15 +250,11 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
 
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT phone_number, context, id FROM call_log WHERE id = ?", (call_id,))
+        cur.execute("SELECT phone_number, context, id, recipient, personal_info FROM call_log WHERE id = ?", (call_id,))
         call = cur.fetchone()
 
-    call = Call(call[0], call[1], call[2])
-
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT personal_info FROM call_log WHERE id = ?", (call_id,))
-        question_answers = cur.fetchone()[0]
+    new_call = Call(call[0], call[1], call[2])
+    question_answers = call[4]
     
     question_answers = question_answers.split('\n')
     question_answers = [qa.split(':') for qa in question_answers]
@@ -283,7 +279,8 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
             "request": request,
             "page": "call",
             'call_id': call_id,
-            'question_answers': question_answers
+            'question_answers': question_answers,
+            'recipient': call[3]
         }
     )
 
