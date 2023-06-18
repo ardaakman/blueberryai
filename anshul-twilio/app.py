@@ -26,6 +26,10 @@ def voice_to_text(url):
     # Transcribe the audio file
     with open(file_name, "rb") as audio_file:
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
+
+    # Delete the audio file
+    os.remove(file_name)
+    
     
     return transcript['text']
 
