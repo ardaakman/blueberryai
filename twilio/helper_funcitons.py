@@ -9,9 +9,17 @@ import openai
 
 sys.path.append('../')  # Add the parent directory to the system path
 from chat import Interaction
+from chat_agents import EfficientContextAgent
+from agent_helpers import ContextManager
 
-interaction = Interaction(task="create a new account", context_directory="./")
-interaction.recipient = "People's Gas"
+# OLD CODE:
+# interaction = Interaction(task="create a new account", context_directory="./")
+# interaction.recipient = "People's Gas"
+# NEW IMPLEMENTATION:
+context_manager = ContextManager()
+context_manager.load_from_directory("./")
+chat_agent = EfficientContextAgent("create a new account", "People's Gas", context_manager)
+
 
 load_dotenv()
 
@@ -100,7 +108,10 @@ def process_recording(recording_url):
     print("Generating response...", end="")
     # Generate a response using OpenAI
     print(recipient_message)
-    generated_response = interaction(recipient_message)
+    # Old call
+    # generated_response = interaction(recipient_message)
+    # New call:
+    generated_response = chat_agent(recipient_message)
     print("Done!")
     print("\t Generated response: ", generated_response)
 
