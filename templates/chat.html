@@ -21,8 +21,9 @@
             </div> -->
             {% for q in question_answers %}
             <div class="mb-3">
-                <label for="exampleInputEmail1" class="form-label">{{q[0]}}</label>
-                <input type="text" class="form-control" id="{{q[0]}}" value="{{q[1]}}" aria-describedby="emailHelp">
+                <label for="exampleInputEmail1" name="{{q[0]}}" class="form-label">{{q[0]}}</label>
+                <input type="text" class="form-control question-answer" name="{{q[0]}}" id="{{q[0]}}" value="{{q[1]}}" aria-describedby="emailHelp">
+                <input type="hidden" class="form-control" name="{{q[0]}}" id="{{q[0]}}-prev" value="{{q[1]}}">
             </div>
             {% endfor %}
             <div style="position: absolute;bottom:1rem">

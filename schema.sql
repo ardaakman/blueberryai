@@ -17,3 +17,4 @@ CREATE TABLE chat (
     message TEXT,
     created DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+

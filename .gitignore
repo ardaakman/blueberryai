@@ -139,3 +139,4 @@ templates/.DS_Store
 env.py
 venv
 twilio/configs.py
+config.py

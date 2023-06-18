@@ -12,7 +12,7 @@ import requests
 import httpx
 import openai
 import os
-from configs import *
+from config import *
 from twilio.rest import Client
 
 from chat import ContextManager
@@ -238,21 +238,25 @@ async def questions(request: Request, call_id: str = Form()):
 
     return RedirectResponse(f"/call/{call_id}", status_code=303)
 
+
 @app.post("/update_personal_info")
-async def update_personal_info(request: Request, call_id: str = Form()):
-    body = await request.form()
-    print("printing body")
-    question_answer_pairs = []
-    for key in body.keys():
-        if key != "call_id":
-            question_answer_pairs.append(f'''{key}: {body[key]}''')
-            
-    # convert question_answer_pairs to str
-    question_answer_pairs = "\n".join(question_answer_pairs)
+async def update_personal_info(request: Request):
+    body = await request.json()
+    call_id = body["call_id"]
+    info = body["info"]
+    print(call_id, info)
 
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("UPDATE call_log SET personal_info = ? WHERE id = ?", (question_answer_pairs, call_id))
+        cur.execute("SELECT personal_info FROM call_log WHERE id = ?", (call_id,))
+        personal_info = cur.fetchone()[0]
+
+    
+    replace_str = [f'''{key["id"]}:{key["value"]}''' for key in info]
+    replace_str = "\n".join(replace_str)
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE call_log SET personal_info = ? WHERE id = ?", (replace_str, call_id))
         conn.commit()
     
     return {"status":"success"}
@@ -273,6 +277,8 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
 
     new_call = Call(call[0], call[1], call[2])
     question_answers = call[4]
+
+    print(question_answers)
     
     question_answers = question_answers.split('\n')
     question_answers = [qa.split(':') for qa in question_answers]
@@ -302,20 +308,20 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
         }
     )
 
-@app.post("/save_message")
-def save_message(request: Request):
-    '''
-    Send data to client
-    '''
-    # save to db
+# @app.post("/save_message")
+# def save_message(request: Request):
+#     '''
+#     Send data to client
+#     '''
+#     # save to db
 
-    # send to client
-    response_val = "Hi how are you doing today?"
+#     # send to client
+#     response_val = "Hi how are you doing today?"
 
-    # generate respoinse
-    data = {'message': message, 'call_id': call_id, 'sender': sender}
-    send_data_to_clients(json.dumps(data))
-    return response_val
+#     # generate respoinse
+#     data = {'message': message, 'call_id': call_id, 'sender': sender}
+#     send_data_to_clients(json.dumps(data))
+#     return response_val
 
 
 # SOCKETS

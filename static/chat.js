@@ -77,7 +77,7 @@ function endCall() {
             grayMessage("Call ended");
             // set button to disabled
             document.getElementById("end-call").disabled = true;
-            
+
         } else {
             show_toast("Error Occured");
         }
@@ -89,11 +89,27 @@ function saveInfo() {
     const call_id = document.getElementById("call_id").value;
     // const message = document.getElementById("message").value;
     // fetch post
-    console.log("Info Updated");
+    console.log(call_id);
+    // create a list of all question-answer values 
+    var info = [];
+    var questions = document.getElementsByClassName("question-answer");
+    // for each question get id and value
+    for (var i = 0; i < questions.length; i++) {
+        var question = questions[i];
+        var id = question.id;
+        var value = document.getElementById(id).value;
+        var prev = document.getElementById(id + '-prev').value;
+        info.push({
+            id: id,
+            value: value,
+            prev: prev
+        });
+    }
     fetch("/update_personal_info", {
         method: "POST",
         body: JSON.stringify({
-            call_id: call_id
+            call_id: call_id,
+            info: info
         })
     })
     .then(response => response.json())
@@ -101,18 +117,19 @@ function saveInfo() {
         console.log(result)
         if (result.status == 'success') {
             console.log("Info Updated");
-            var chat = document.getElementById("chat");
-            var chatBubble = document.createElement("div");
-            chatBubble.classList.add("chat-bubble");
-            chatBubble.classList.add("chat-caller");
-            var chatText = document.createElement("div");
-            chatText.classList.add("chat-text");
-            var chatTextP = document.createElement("p");
-            chatTextP.innerText = message;
-            chatText.appendChild(chatTextP);
-            chatBubble.appendChild(chatText);
-            chat.appendChild(chatBubble);
-            chat.scrollTop = chat.scrollHeight;
+            show_toast("Info Updated");
+            // var chat = document.getElementById("chat");
+            // var chatBubble = document.createElement("div");
+            // chatBubble.classList.add("chat-bubble");
+            // chatBubble.classList.add("chat-caller");
+            // var chatText = document.createElement("div");
+            // chatText.classList.add("chat-text");
+            // var chatTextP = document.createElement("p");
+            // chatTextP.innerText = message;
+            // chatText.appendChild(chatTextP);
+            // chatBubble.appendChild(chatText);
+            // chat.appendChild(chatBubble);
+            // chat.scrollTop = chat.scrollHeight;
         } else {
             show_toast("Error Occured");
         }
