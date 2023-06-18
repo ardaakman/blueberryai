@@ -28,10 +28,14 @@ class ContextManager():
         self.context.extend([f"{q}: {a}" for q,a in list_of_qa])
     
     @staticmethod
-    def generate_questions_from_task(task, model="gpt-3.5-turbo"):
-        prompt = f"""Given the context of {task}, what are some possible personal questions, 
-                    such as date of birth, account number, etc. that the customer service agent might ask the user?
-                    Phrase questions as key words, such as "Date of Birth". Give multiple questions seperated by a new line."""
+    def generate_questions_from_task(task, model="gpt-3.5-turbo", num_questions=5):
+        prompt = f"""
+Given the context of {task}, what are some possible personal questions, 
+such as date of birth, account number, etc. that the customer service agent might ask the user?
+Phrase questions as key words, such as "Date of Birth". Give multiple questions seperated by a new line.
+
+Limit your answers to {num_questions} questions.
+"""
         
         messages = [{"role": "user", "content": prompt}]
         completion = openai.ChatCompletion.create(
