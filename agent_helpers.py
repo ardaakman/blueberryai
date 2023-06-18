@@ -106,6 +106,18 @@ Given the context of {task}, what are some possible personal questions,
 such as date of birth, account number, etc. that the customer service agent might ask the user?
 Phrase questions as key words, such as "Date of Birth". 
 
+Here are some good questions to ask in general, but feel free to come up with your own questions based on the task at hand:
+- Date of birth
+- Full name
+- Email address
+- Phone number
+- Last four digits of your social security number
+- Address
+
+If the task is about an existing subscription, you can ask:
+- Account number 
+- The current subscription you're on
+
 Limit your answers to {num_questions} questions. Do not number the questions. Just give questions seperated by a new line.
 """
         
