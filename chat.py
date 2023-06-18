@@ -93,9 +93,9 @@ class Interaction():
         )
         return completion.choices[0].message
 
-interaction = Interaction(task="create a new account", context_directory="data/ekrem/")
-interaction.recipient = "People's Gas"
-interaction()
+# interaction = Interaction(task="create a new account", context_directory="data/ekrem/")
+# interaction.recipient = "People's Gas"
+# interaction()
 
 # data = SimpleDirectoryReader(input_dir="data/ekrem/").load_data()
 
