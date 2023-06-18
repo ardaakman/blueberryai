@@ -10,6 +10,10 @@ from utils import *
 import json
 import requests
 import httpx
+import openai
+import os
+from configs import *
+from twilio.rest import Client
 
 from chat import ContextManager
 
@@ -20,6 +24,87 @@ BASE_PATH = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory="static"), name="static")
 TEMPLATES = Jinja2Templates(directory=str(BASE_PATH / "templates"))
 USER_ID = 1
+
+
+class Chat:
+    def __init__(self, context):
+        self.agent_description = self.generate_agent_description(context)
+        self.history = [{'role': 'system', 'content': self.agent_description}]
+
+    def generate_agent_description(self, context):
+        prompt = f"""
+            You're imitating a human that is trying to {context}. 
+            You're on a call with customer service.  
+            Sound like a human and use your context to return the appropriate response. Keep responses short, simple, and informal.
+            You could use filler words like 'um' and 'uh' to sound more human. To end the call, just return 'bye'. For information you are unsure about, return "/user <question>".
+            Here is some information about you:
+        """
+        with open('info.txt', 'r') as f:
+            info = f.read()
+        prompt += info
+        print(prompt)
+        return prompt
+
+    def add(self, message, role='user'):
+        self.history.append({'role': role, 'content': message})
+
+    def generate(self):
+        try:
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=self.history,
+            )
+            value = completion.choices[0].message['content']
+            print(value)
+            return value
+        except:
+            return "Sorry, I don't understand. Can you repeat that?"
+
+    def stream(self, socket):
+        return True
+    
+class Call:
+    def __init__(self, to, context):
+        self.recipient = to
+        self.context = context
+        if os.stat("info.txt").st_size == 0:
+            self.questions = self.generate_questions()
+        self.chat = Chat(context)
+
+    def generate_questions(self):
+        try:
+            prompt = f"""Given the context of {self.context}, what are some possible personal questions, 
+                        such as date of birth, account number, etc. that the customer service agent might ask the user?
+                        Phrase questions as key words, such as "Date of Birth". Give multiple questions seperated by a new line."""
+            prompt = [{'role': 'user', 'content': prompt}]
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=prompt,
+            )
+            value = completion.choices[0].message['content']
+            questions = value.split('\n')
+            
+            for question in questions:
+                # ask question in input terminal and save question: answer as a new line to info.txt
+                answer = input(question + '\n')
+                with open('info.txt', 'a') as f:
+                    f.write(question + ': ' + answer + '\n')
+        except:
+            print('error')
+            return False
+
+    def call(self):
+        client = Client(account_sid, auth_token)
+        to = self.recipient
+        to = "9495016532"
+        call = client.calls.create(
+            # url='https://handler.twilio.com/twiml/EH9c51bf5611bc2091f8d417b4ff44d104',
+            url='https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo',
+            to="+1" + to,
+            from_="+18777192546"
+        )
+        print(call.sid)
+
 
 async def make_http_request(url: str, data: dict):
     async with httpx.AsyncClient() as client:
@@ -110,20 +195,25 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
     Page to view ongoinng call
     ''' 
     # initiate call [TODO]
-    url = 'http://127.0.0.1:8000/start_call'
+    url = 'http://127.0.0.1:5001/start_call'
 
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT phone_number FROM call_log WHERE id = ?", (call_id,))
+        cur.execute("SELECT phone_number, context FROM call_log WHERE id = ?", (call_id,))
         call = cur.fetchone()
 
     data = {
         'call_id': call_id,
-        'phone_number': call[0]
+        'to': call[0],
+        'context': call[1]
     }
-    
-    # Add the request function to the background tasks
+
     background_tasks.add_task(make_http_request, url, data)
+    print("added task")
+    
+    # # Add the request function to the background tasks
+    # async with httpx.AsyncClient() as client:
+    #     response = await client.get(url, params=data)
 
     return TEMPLATES.TemplateResponse(
         "chat.html",
@@ -139,7 +229,9 @@ def post_to_client(data):
     '''
     Send data to client
     '''
+    print("sending data to client", data)
     send_data_to_clients(data)
+    return True
 
 
 # SOCKETS

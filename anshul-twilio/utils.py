@@ -6,7 +6,7 @@ import configs
 # utils
 def voice_to_text(url):
     # Download the file from `url` and save it locally under `file_name`:
-    openai.api_key = configs.openai
+    openai.api_key = configs.openai_api_key
     random_uuid = str(uuid.uuid4())
     try:
         
