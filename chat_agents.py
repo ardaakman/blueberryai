@@ -170,7 +170,7 @@ Here's an example of good interactions:
     Customer support: What is your home address?
     Agent response: six four Montgomery Drive, Pittsford NY one five two eight nine.
 
-Now let's transition to your current conversation with the customer service agent. Respond briefly.
+Now let's transition to your current conversation with the customer service agent. Respond briefly. It shouldn't be more than 30 words.
 
 Customer Service Agent: 
 {customer_service_response}
