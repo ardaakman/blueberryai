@@ -53,8 +53,6 @@ async def init(request: Request, number: str = Form(), recipient: str = Form(), 
         call_id = cur.lastrowid
         conn.commit()
 
-    # initiate call [TODO]
-
 
     # redirect to call page
     return RedirectResponse(f"/questions/{call_id}", status_code=303)
@@ -66,11 +64,14 @@ async def questions(request: Request, call_id: str):
     '''
     Page to view call history
     '''
+    # generate questions
     return TEMPLATES.TemplateResponse(
         "questions.html",
         {
             "request": request,
-            "call_id": call_id
+            "call_id": call_id,
+            "page": "questions",
+            "questions": []
         }
     )
 
@@ -84,6 +85,7 @@ async def questions(request: Request, call_id: str = Form()):
 
     # save to db
 
+    # redirect to call [TODO]
 
     return RedirectResponse(f"/call/{call_id}", status_code=303)
 
@@ -93,6 +95,7 @@ async def call(request: Request, call_id: str):
     '''
     Page to view ongoinng call
     ''' 
+    # initiate call [TODO]
 
     return TEMPLATES.TemplateResponse(
         "chat.html",
