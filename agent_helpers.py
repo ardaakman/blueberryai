@@ -4,8 +4,67 @@ from utils import *
 
 from dotenv import load_dotenv
 
+from chat_agents import *
+
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
+
+class CallHandler():
+    def __init__(self, call_id):
+        self.call_id = call_id
+        
+        self.recipient, self.task_context = self.retrieve_task_and_recipient()
+        
+        self.context_manager = ContextManager()
+        self.context_manager.sync_to_database(call_id)
+        
+        self.chat_agent = EfficientContextAgent(self.task_context, self.recipient, self.context_manager)
+    
+    def retrieve_task_and_recipient(self):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT context, recipient FROM call_log WHERE id = ?", (self.call_id,))
+            task, recipient = cur.fetchone()
+        
+        return task, recipient
+    
+    def load_dialogue(self):
+        def format_dialogue_to_gpt(dialogue, customer_tag="customer", agent_tag="agent"):
+            result = []
+            for sender, message in dialogue:
+                if sender == customer_tag:
+                    entry = {"role": "user", "content": f"Customer Service Agent: {message}"}
+                elif sender == agent_tag:
+                    entry = {"role": "assistant", "content": f"{message}"}
+                else:
+                    raise Exception("Invalid sender tag.")
+                
+                result.append(entry)
+            return result
+            
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id, sender, message FROM chat WHERE call_id = ? ORDER BY id ASC", (self.call_id,))
+            rows = cur.fetchall()
+
+        dialogue = [(row['sender'], row['message']) for row in rows]
+        gpt_dialogue_history = format_dialogue_to_gpt(dialogue)
+        
+        return gpt_dialogue_history
+
+    def generate_response(self, customer_service_respond):
+        # Update the context with the most recent one
+        self.context_manager.sync_to_database(self.call_id)
+        # Load the dialogue history
+        self.chat_agent.dialogue_history = self.load_dialogue()
+        # Use the chat-agent to get a response
+        agent_response = self.chat_agent(customer_service_respond)
+        # Return response
+        return agent_response
+    
+    def call(self, customer_service_respond):
+        return self.generate_response(customer_service_respond)
+        
 
 class ContextManager():
     def __init__(self):
