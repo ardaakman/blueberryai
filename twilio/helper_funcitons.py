@@ -23,11 +23,12 @@ load_dotenv()
     get_url_recording --> Download mp3 file from url
     count_files_in_directory --> Count number of files in a directory, to set the name of the new file name.
 """
+
 def upload_file_to_wasabi(file_path, bucket_name):
     s3 = boto3.client('s3',
                       endpoint_url='https://s3.us-west-1.wasabisys.com',  # Use the correct endpoint URL for your Wasabi region
-                      aws_access_key_id='MICPMAWAWF2KI1CRWU0B',  # Replace with your access key
-                      aws_secret_access_key='DkLNyYz0uP1EJINhAizYIlRLzAgWMZSHzbH11RZY')  # Replace with your secret key
+                      aws_access_key_id='6UQ6BKLP89DNA5G37191',  # Replace with your access key
+                      aws_secret_access_key='tpkQAodRS6LfjfC33VTF8GzhorewzhzfWuElr8sI')  # Replace with your secret key
 
     file_name = os.path.basename(file_path)
 
@@ -86,7 +87,7 @@ def convert_speech_to_text_hume(recording_url):
     }
 
     response = requests.post(url, data=payload, headers=headers)
-    return response.text
+    return response
 
 # Function to process the recording and generate a response
 def process_recording(recording_url):
@@ -97,6 +98,7 @@ def process_recording(recording_url):
 
     print("Generating response...", end="")
     # Generate a response using OpenAI
+    print(recipient_message)
     generated_response = interaction(recipient_message)
     print("Done!")
     print("\t Generated response: ", generated_response)
@@ -120,7 +122,7 @@ def save_generated_response_as_audio(generated_response):
 
     url = "https://api.fliki.ai/v1/generate/text-to-speech"
     headers = {
-        "Authorization": f"Bearer {fliki_api_key}",
+        "Authorization": f"Bearer {os.getenv('FLIKI_API_KEY')}",
         "Content-Type": "application/json"
     }
     data = {

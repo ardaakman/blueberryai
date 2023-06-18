@@ -1,0 +1,12 @@
+Information on task:
+Hey I want to create a new account with People's Gas company.
+
+Personal Information:
+SSN = 123-45-678
+Name = Ekrem Korkmaz
+Date of birth = 03/02/2001
+Home Address = 5032 Forbes Ave, SMC 1000, Pittsburgh PA 15289
+
+Bank Information:
+Bank Name = Chase
+Account Number = CHASUS-12345678

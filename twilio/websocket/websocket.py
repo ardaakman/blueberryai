@@ -22,6 +22,7 @@ manager = ConnectionManager()
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
+    print("here")
     try:
         while True:
             data = await websocket.receive_text()

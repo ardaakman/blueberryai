@@ -1,6 +1,6 @@
 import time
 from flask import Flask, request
-from twilio.twiml.voice_response import VoiceResponse, Gather, Start, Connect, Stream
+from twilio.twiml.voice_response import VoiceResponse, Gather, Start, Connect, Stream, Stop
 from twilio.rest import Client
 from dotenv import load_dotenv
 import os
@@ -13,6 +13,8 @@ load_dotenv()
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 
+record_seconds = 7
+number_of_times_so_far = 0
 # Twilio account credentials
 account_sid = os.getenv("ACCOUNT_SID")
 auth_token = os.getenv("AUTH_TOKEN")
@@ -23,6 +25,10 @@ app = Flask(__name__)
 # Enable logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# clear the outputs folder
+for file in os.listdir(os.path.join(CURRENT_DIR, "outputs")):
+    os.remove(os.path.join(CURRENT_DIR, "outputs", file))
 
 @app.route("/outbound", methods=['GET'])
 def outbound_call():
@@ -40,10 +46,10 @@ def outbound_call():
 
 @app.route("/conversation", methods=['POST'])
 def conversation():
+    #Functionality for initially listening to the user will be here.
     try:
         resp = VoiceResponse()
-        resp.say("Hi, tell us the problem!")
-        resp.record(maxLength="30", action="/handle_recording", playBeep=False, timeout="5", finishOnKey="#")
+        resp.record(maxLength=record_seconds, action="/handle_recording", playBeep=False, timeout="3", finishOnKey="#")
         return str(resp)
     except Exception as e:
         logger.error("Error during conversation:", exc_info=True)
@@ -57,7 +63,11 @@ def handlewebsocket():
 
 @app.route("/handle_recording", methods=['POST'])
 def handle_recording():
-    print("Dealing with recordings")
+    global number_of_times_so_far
+    resp= VoiceResponse()
+    if (number_of_times_so_far == 5):
+        resp.redirect("/handle_ending")
+    print("Dealing with recording")
     recording_url = request.values.get('RecordingUrl', None)
     response = requests.get(recording_url, stream=True)
     print("creating a response")
@@ -72,10 +82,19 @@ def handle_recording():
     else:
         print('Failed to download the file.')
 
-    upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "calhacksaudio")
+    upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "blueberryai-input")
     resp= VoiceResponse()
-    resp.say("Give me one moment please.")
-    resp.redirect('/ending')
+    start = resp.start()
+    start.stream(url="https://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws")
+    print(num_files)
+    url_to_play = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{num_files}.mp3")
+    # start.stream()
+    resp.play(url_to_play)
+    stop= resp.stop()
+    stop.stream()
+    #Jump back to conversation for now.
+    number_of_times_so_far += 1
+    resp.redirect('/conversation')
     #Try using the recording url from wasabi to create a response.
 
     return str(resp)
@@ -87,18 +106,25 @@ def ending():
         #fetch wasabi stuff and do recording.
         url_to_play = process_recording("https://s3.us-west-1.wasabisys.com/calhacksaudio/output_0.mp3")
         print(url_to_play)
-        resp.play(url_to_play)
+        resp.play(url_to_play, action="/handle_ending")
         resp.say("Thank you for your time! Have a wonderful day.")
+        return str(resp)
     
     except Exception as e:
         logger.error("Error during ending:", exc_info=True)
         return str(e)
 
-        
 
-
-
+@app.route("/handle_ending", methods=['POST'])
+def handle_ending():
+    try:
+        resp = VoiceResponse()
+        resp.say("Thank you for your time! Have a wonderful day.")
+        return str(resp)
+    except Exception as e:
+        logger.error("Error during ending:", exc_info=True)
 # Below here is mostly for testing stuff out.
+
 @app.route("/inbound", methods=['POST'])
 def inbound_call():
     try:
