@@ -189,10 +189,10 @@ def convert_speech_to_text_hume(recording_url):
     return response
 
 # Function to process the recording and generate a response
-def process_recording(recording_url):
+def process_recording(path):
     # Convert recording to text using speech-to-text API or library
     # Here, let's assume we have a function called `convert_speech_to_text` for this purpose
-    recipient_message = convert_speech_to_text(recording_url)
+    recipient_message = convert_speech_to_text(path)
 
     # Generate a response using OpenAI
     print(recipient_message)

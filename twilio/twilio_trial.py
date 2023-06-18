@@ -101,8 +101,8 @@ def handle_recording():
         print("Done with recording this one.")
         speech_detected = detect_speech_with_noise_reduction(url)
         if (speech_detected):
-            response.redirect("./conversation")
-        response.record(max_length=5, timeout=2, action='/handle_recording', play_beep=False, trim='trim-silence')
+            response.record(max_length=5, timeout=2, action='/handle_recording', play_beep=False, trim='trim-silence')
+        response.redirect("./conversation")
     
     return str(response)
 
@@ -113,7 +113,7 @@ def handle_recording_input(file_path):
     if os.path.exists(file_path):
         # Upload the file to Wasabi
         upload_file_to_wasabi(file_path, "blueberryai-input")
-        url_to_play, text = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{}.mp3".format(num_files-1))
+        url_to_play, text = process_recording("outputs/output_{}.mp3".format(num_files-1))
     else:
         print('File does not exist.')
         url_to_play, text = None, None
