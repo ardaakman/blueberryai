@@ -1,0 +1,13 @@
+Hi! This is People's gas, how could we help you today?
+What is your name?
+How do you spell that?
+What is your date of birth?
+What is your social security number?
+Do you already have a People's account?
+What could we help you with today?
+What is your home address?
+Does your home have a gas account already?
+Do you need a new gas account?
+Could I get an email address?
+Could you spell that?
+What is your phone number?

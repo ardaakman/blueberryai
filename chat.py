@@ -28,8 +28,11 @@ class ContextManager():
     def load_from_database(self):
         pass
     
-    def generate_questions_from_task(self, task, recipient, model="gpt-3.5-turbo"):
-        prompt = f"I want to {task} with {recipient}. What questions would they most likely ask me? Can you format your response such that there's one question on each line and no commentary?"
+    @staticmethod
+    def generate_questions_from_task(task, model="gpt-3.5-turbo"):
+        prompt = f"""Given the context of {task}, what are some possible personal questions, 
+                    such as date of birth, account number, etc. that the customer service agent might ask the user?
+                    Phrase questions as key words, such as "Date of Birth". Give multiple questions seperated by a new line."""
         
         messages = [{"role": "user", "content": prompt}]
         completion = openai.ChatCompletion.create(
@@ -39,10 +42,18 @@ class ContextManager():
         questions = completion.choices[0].message.content.split("\n")
         questions = [q.strip() for q in questions]
         
-        for q in questions:
-            self.context.append((q, input(f"Enter the answer to the question - {q}: ")))
+        # for q in questions:
+        #     context.append((q, input(f"Enter the answer to the question - {q}: ")))
                                 
         return questions
+    
+def test(agent):
+    with open("transcript.txt", "r") as file_handler:
+        transcript = file_handler.read().splitlines()
+    
+    for customer_support_response in transcript:
+        print("Customer support:", customer_support_response)
+        print("Agent response:", agent(customer_support_response))
     
 # TODO: Chat engine should keep track of both the context and the dialogue
 # TODO: The dialogue is important for the classification task
@@ -82,12 +93,28 @@ class Agent():
         
         # Setup chat engine
         self.model = "gpt-3.5-turbo" 
-        agent_description_prompt = f"You're imitating a human that is trying to {task} with {recipient}. Imagine you're on a call with their customer service. Sound like a human and use your context to return the appropriate response. You could use filler words like 'um' and 'uh' to sound more human."
-        self.agent_description = [{"role": "system", "content": agent_description_prompt}]
+        agent_description_prompt = self.generate_agent_description(task, recipient)
+        self.agent_description = {"role": "system", "content": agent_description_prompt}
         
         # Setup loggers to keep track of conversation and history
         self.messages = [self.agent_description]
         self.dialogue_history = []
+        
+    def generate_agent_description(self, task, recipient):
+        prompt = f"""
+            You're imitating a human that is trying to {task} with {recipient}. 
+            You're on a call with customer service.  
+            Sound like a human and use your context to return the appropriate response. Keep responses short, simple, and informal. Pretend that you're speeking on the phone, so if you need to say any numbers, write them as digits with spaces in between. Like 5032 should be 5 0 3 2.
+            You could use filler words like 'um' and 'uh' to sound more human. To end the call, just return 'bye'. For information you are unsure about, return "/user <question>".
+        """
+        
+        if len(self.context_manager.context) > 0:
+            prompt += "\nHere is some information about you:"
+            
+            for c in self.context_manager.context:
+                prompt += f"\n{c}"
+        
+        return prompt
         
     def connect_context(self, context_manager : ContextManager):
         self.context_manager = context_manager
@@ -113,33 +140,46 @@ class Agent():
         components = [context, ending_prompt, formatting_prompt, customer_service_prompt, agent_response_prompt]
         return "\n".join(components)
     
-    def generate_response(self, customer_service_response):
-        new_dialogue_chain = {"role": "user", "content": customer_service_response}
-        new_messages_chain = {"role": "user", "content": self.engineer_prompt(customer_service_response)}
+    def add(self, message, role='user'):
+        self.messages.append({'role': role, 'content': message})
+
+    def generate(self):
+        try:
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=self.messages,
+            )
+            value = completion.choices[0].message['content']
+            return value
+        except:
+            return "Sorry, I don't understand. Can you repeat that?"
+    
+    # def generate_response(self, customer_service_response):
+    #     new_dialogue_chain = {"role": "user", "content": customer_service_response}
+    #     new_messages_chain = {"role": "user", "content": self.engineer_prompt(customer_service_response)}
         
-        self.dialogue_history.append(new_dialogue_chain)
-        self.messages.append(new_messages_chain)
+    #     self.dialogue_history.append(new_dialogue_chain)
+    #     self.messages.append(new_messages_chain)
         
-        if self.efficient_messages:
-            messages = [self.agent_description] + self.dialogue_history[:-1] + [new_messages_chain]
-        else:
-            messages = self.messages
+    #     if self.efficient_messages:
+    #         messages = [self.agent_description] + self.dialogue_history[:-1] + [new_messages_chain]
+    #     else:
+    #         messages = self.messages
         
-        completion = openai.ChatCompletion.create(
-            model=self.model,
-            messages=messages
-        )
-        print(completion.choices[0])
-        response = completion.choices[0].message
+    #     completion = openai.ChatCompletion.create(
+    #         model=self.model,
+    #         messages=messages
+    #     )
+    #     print(completion.choices[0])
+    #     response = completion.choices[0].message
         
-        
-        
-        
-    def __call__():
-        pass
+    def __call__(self, customer_service_response):
+        self.add(customer_service_response)
+        agent_response = self.generate()
+        self.add(agent_response, role="assistant")
     
     def start_conversation(self):
-        return self.generate_response("<silence from the customer service agent>")
+        return self("<silence from the customer service agent>")
     
 
 class Interaction():
@@ -218,15 +258,15 @@ class Interaction():
             You're on a call with {self.recipient} customer service.  
             Sound like a human and use your context to return the appropriate response.
             You could use filler words like 'um' and 'uh' to sound more human.
-    
-            Customer Service Agent: 
-            {customer_service_response}
             
             Here's information about the human you're imitating, you can use this to help you respond: 
             {self.context}
             
             Your response should be to the point and succint. Don't provide any personal information when not asked. 
             Represent numbers as digits with spaces in between. Like 5032 should be 5 0 3 2.
+            
+            Customer Service Agent: 
+            {customer_service_response}
             
             Your Response:
         """
@@ -239,9 +279,9 @@ class Interaction():
         )
         return completion.choices[0].message
 
-interaction = Interaction(task="create a new account", context_directory="twilio/")
-interaction.recipient = "People's Gas"
-interaction()
+# interaction = Interaction(task="create a new account", context_directory="twilio/")
+# interaction.recipient = "People's Gas"
+# interaction()
 
 # data = SimpleDirectoryReader(input_dir="data/ekrem/").load_data()
 
