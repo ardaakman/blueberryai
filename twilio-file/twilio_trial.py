@@ -77,7 +77,7 @@ def conversation():
     # start = response.start()
     # start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/audio_detection')
     # Streaming is complicated.
-    response.record(max_length=5, timeout=2, play_beep=False, action="./handle_recording", trim='trim-silence')
+    response.record(max_length=7, timeout=0.5, play_beep=False, action="./handle_recording", trim='trim-silence')
     return str(response)
 
 
@@ -101,7 +101,7 @@ def handle_recording():
         print("Done with recording this one.")
         speech_detected = detect_speech_with_noise_reduction(url)
         if (speech_detected):
-            response.record(max_length=5, timeout=2, action='/handle_recording', play_beep=False, trim='trim-silence')
+            response.record(max_length=7, timeout=0.5, action='/handle_recording', play_beep=False, trim='trim-silence')
         response.redirect("./conversation")
     
     return str(response)

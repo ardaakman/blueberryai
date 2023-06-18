@@ -12,6 +12,7 @@ import noisereduce as nr
 import soundfile as sf
 import io
 
+
 import openai
 
 sys.path.append('../')  # Add the parent directory to the system path
@@ -38,6 +39,14 @@ load_dotenv()
     get_url_recording --> Download mp3 file from url
     count_files_in_directory --> Count number of files in a directory, to set the name of the new file name.
 """
+def save_message(call_id, message, sender):
+    print('save_message')
+    url = "http://127.0.0.1:8201/save_message"
+    data = {"message": message, "sender": sender, "call_id": call_id}
+    response_val = requests.post(url, data = json.dumps(data)) 
+    print(response_val.text)
+    return response_val.text
+
 
 def upload_file_to_wasabi(file_path, bucket_name):
     s3 = boto3.client('s3',
@@ -189,24 +198,17 @@ def convert_speech_to_text_hume(recording_url):
     return response
 
 # Function to process the recording and generate a response
-def process_recording(path):
+def process_recording(path, call_id):
     # Convert recording to text using speech-to-text API or library
     # Here, let's assume we have a function called `convert_speech_to_text` for this purpose
     recipient_message = convert_speech_to_text(path)
 
-    # Generate a response using OpenAI
-    print(recipient_message)
-    # Old call
-    # generated_response = interaction(recipient_message)
-    # New call:
-    generated_response = chat_agent(recipient_message)
+    generated_response = save_message(call_id, recipient_message)
     print("Done!")
     print("\t Generated response: ", generated_response)
 
     # Save the generated response as an audio url
     audio_url = save_generated_response_as_audio(generated_response)
-    num_files = count_files_in_directory("outputs")
-    upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "bluberry-output" )
     return audio_url, generated_response
 
 
