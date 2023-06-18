@@ -46,26 +46,34 @@ def outbound_call():
 
 @app.route("/conversation", methods=['POST'])
 def conversation():
-    #Functionality for initially listening to the user will be here.
-    try:
-        resp = VoiceResponse()
-        resp.record(maxLength=record_seconds, action="/handle_recording", playBeep=False, timeout="3", finishOnKey="#")
-        return str(resp)
-    except Exception as e:
-        logger.error("Error during conversation:", exc_info=True)
-        return str(e)
-
-@app.route("/handle_recording", methods=['POST'])
-def handle_recording():
-    global number_of_times_so_far
-    resp= VoiceResponse()
-    if (number_of_times_so_far == 7):
-        resp.redirect("/handle_ending")
-    print("Dealing with recording")
     recording_url = request.values.get('RecordingUrl', None)
-    response = requests.get(recording_url, stream=True)
-    print("creating a response")
+    response = VoiceResponse()
+    if recording_url:
+        recording_url = requests.get(recording_url, stream=True)
+        recipient_message, text = handle_recording_input(recording_url)
+        print(text)
+        if len(text) > 0:
+            response.pause()
+            if "bye" in text.lower():
+                response.hangup()
+            else:
+                if "/user" in text.lower():
+                    user_info = None
+                    while user_info is None:
+                        response.pause()
+                        user_info = input(text.split('/user')[1])
+                    recipient_message = user_info
+                # start = response.start()
+                # start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws')
+                response.play(recipient_message)
+                # stop = response.stop()
+                # stop.stream()
+    
+    response.record(max_length=20, timeout=3, action='/conversation', play_beep=False, trim='trim-silence')
+    return str(response)
 
+
+def handle_recording_input(response):
     num_files = count_files_in_directory(CURRENT_DIR + "/outputs")
     # Ensure the request is successful
     if response.status_code == 200:
@@ -77,24 +85,24 @@ def handle_recording():
         print('Failed to download the file.')
 
     upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "blueberryai-input")
-    resp= VoiceResponse()
-    start = resp.start()
-    start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws')
-    print(num_files)
-    url_to_play = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{}.mp3".format(num_files))
-    # start.stream()
-    resp.play(url_to_play)
-    stop= resp.stop()
-    stop.stream()
-    # Get the data from the FastAPI application
-    response = requests.get('https://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/get_data')
-    data_received = response.json()
-    print(f"Data received from WebSocket: {data_received}")
-    number_of_times_so_far += 1
-    resp.redirect('/conversation')
-    #Try using the recording url from wasabi to create a response.
+    url_to_play, text = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{}.mp3".format(num_files))
+    return url_to_play, text
 
-    return str(resp)
+# def handle_recording():
+#     global number_of_times_so_far
+#     resp= VoiceResponse()
+#     if (number_of_times_so_far == 7):
+#         resp.redirect("/handle_ending")
+#     resp= VoiceResponse()
+#     # Get the data from the FastAPI application
+#     response = requests.get('https://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/get_data')
+#     data_received = response.json()
+#     print(f"Data received from WebSocket: {data_received}")
+#     number_of_times_so_far += 1
+#     resp.redirect('/conversation')
+#     #Try using the recording url from wasabi to create a response.
+
+#     return str(resp)
 
 @app.route("/handle_ending", methods=['POST'])
 def handle_ending():

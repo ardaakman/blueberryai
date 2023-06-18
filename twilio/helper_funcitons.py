@@ -109,12 +109,8 @@ def process_recording(recording_url):
     audio_url = save_generated_response_as_audio(generated_response)
     print("Done!")
     print("Sending response to recipient...", end="")
-    return audio_url
+    return audio_url, generated_response
 
-    response.play(audio_url)
-    print("Done!")
-    response.record(max_length=30, action='/process_recording')
-    return str(response)
 
 # Function to save the generated response as an audio file
 def save_generated_response_as_audio(generated_response):
