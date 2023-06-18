@@ -6,8 +6,9 @@ What is your social security number?
 Do you already have a People's account?
 What could we help you with today?
 What is your home address?
+Could you repeat that?
 Does your home have a gas account already?
 Do you need a new gas account?
 Could I get an email address?
-Could you spell that?
+Could you spell that email address?
 What is your phone number?
