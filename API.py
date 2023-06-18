@@ -136,7 +136,6 @@ class CallHandler():
             from_="+18777192546"
         )
         print(call.sid)
-        
 
 async def make_http_request(url: str, data: dict):
     async with httpx.AsyncClient() as client:
@@ -239,6 +238,25 @@ async def questions(request: Request, call_id: str = Form()):
 
     return RedirectResponse(f"/call/{call_id}", status_code=303)
 
+@app.post("/update_personal_info")
+async def update_personal_info(request: Request, call_id: str = Form()):
+    body = await request.form()
+    print("printing body")
+    question_answer_pairs = []
+    for key in body.keys():
+        if key != "call_id":
+            question_answer_pairs.append(f'''{key}: {body[key]}''')
+            
+    # convert question_answer_pairs to str
+    question_answer_pairs = "\n".join(question_answer_pairs)
+
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE call_log SET personal_info = ? WHERE id = ?", (question_answer_pairs, call_id))
+        conn.commit()
+    
+    return {"status":"success"}
+    
 
 @app.get("/call/{call_id}", response_class=HTMLResponse)
 async def call(request: Request, call_id: str, background_tasks: BackgroundTasks):
