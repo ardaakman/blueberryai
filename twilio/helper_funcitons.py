@@ -5,6 +5,8 @@ import requests
 import os, sys
 from dotenv import load_dotenv
 
+import openai
+
 sys.path.append('../')  # Add the parent directory to the system path
 from chat import Interaction
 
@@ -56,6 +58,18 @@ def count_files_in_directory(directory):
 
 """ Functions to help out with Humes API calls for speech to text."""
 def convert_speech_to_text(recording_url):
+    return convert_speech_to_text_whisper(recording_url)
+    
+def convert_speech_to_text_whisper(recording_url):
+    # Download the audio file from the URL
+    response = requests.get(recording_url)
+    audio_file = response.content
+
+    transcript = openai.Audio.transcribe("whisper-1", audio_file)
+    
+    return transcript
+    
+def convert_speech_to_text_hume(recording_url):
     url = "https://api.hume.ai/v0/batch/jobs"
 
     payload = "{\"models\":{\"face\":{\"fps_pred\":3,\"prob_threshold\":0.99,\"identify_faces\":false,\"min_face_size\":60,\"save_faces\":false},\"prosody\":{\"granularity\":\"utterance\",\"identify_speakers\":false,\"window\":{\"length\":4,\"step\":1}},\"language\":{\"granularity\":\"word\",\"identify_speakers\":false},\"ner\":{\"identify_speakers\":false}},\"transcription\":{\"language\":null}," + "\"urls\":[\"" + recording_url + "\"],\"notify\":false}"
