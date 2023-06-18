@@ -74,7 +74,7 @@ def convert_speech_to_text_whisper(recording_url):
     with open("temp.wav", "rb") as file:
         transcript = openai.Audio.transcribe("whisper-1", file)
     
-    return transcript
+    return transcript.text
     
 def convert_speech_to_text_hume(recording_url):
     url = "https://api.hume.ai/v0/batch/jobs"
