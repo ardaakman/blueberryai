@@ -132,16 +132,9 @@ You're given a conversation between a customer and a customer service representa
 Your goal is to summarize the conversation to actionable items. 
         """
         
-    def engineer_prompt(self, dialogue_history):
-        dialogue = ""
-        for dialogue_dict in dialogue_history:
-            if dialogue_dict["role"] == "user":
-                dialogue += "\n" + dialogue_dict["content"]
-            elif dialogue_dict["role"] == "assistant":
-                dialogue += "\n" + "Human" + dialogue_dict["content"]
-        
+    def engineer_prompt(self, dialogue):        
         prompt = f"""
-You are a personal assistant. You're listening to a conversation between a human and a customer service representative. This dialogue is given between the triple quotes. Summarize the following dialogue to a list of important information provided by the customer service representative. This information shouldn't include anything the human would know before the conversation. Your response should be brief.
+You are a personal assistant. You're listening to a conversation between BlueberryAI and a customer service representative. This dialogue is given between the triple quotes. Summarize the following dialogue to a list of important information provided by the customer service representative. This information shouldn't include anything the human would know before the conversation. Your response should be brief.
 \"\"\"
 {dialogue}
 \"\"\"
@@ -164,22 +157,28 @@ You are a personal assistant. You're listening to a conversation between a human
             result = []
             for sender, message in dialogue:
                 if sender == customer_tag:
-                    entry = {"role": "user", "content": f"Customer Service Agent: {message}"}
+                    entry = f"Customer Service Agent: {message}"
                 elif sender == agent_tag:
-                    entry = {"role": "assistant", "content": f"{message}"}
+                    entry = f"BlueberryAI: {message}"
                 else:
                     raise Exception("Invalid sender tag.")
                 
                 result.append(entry)
-            return result
+                
+            return "\n".join(result)
         
         dialogue = CallHandler.retrieve_dialogue_from_db(call_id)
-        
+        dialogue = format_dialogue(dialogue)
     
-    def __call__(self, agent):
-        dialogue_history = agent.dialogue_history
+    def __call__(self, agent_or_call_id):
+        if isinstance(agent_or_call_id, Agent):
+            dialogue = self.get_dialogue_history_from_agent(agent_or_call_id)
+        elif isinstance(agent_or_call_id, int):
+            dialogue = self.get_dialogue_history_from_database(agent_or_call_id)
+        else:
+            raise Exception("Invalid input. Either give agent or call id")
         
-        prompt = self.engineer_prompt(dialogue_history)
+        prompt = self.engineer_prompt(dialogue)
         messages = [self.agent_description, {"role": "user", "content": prompt}]
         completion = openai.ChatCompletion.create(
             model=self.model,
