@@ -11,6 +11,8 @@ import json
 import requests
 import httpx
 
+from chat import ContextManager
+
 app = FastAPI()
 
 api_router = APIRouter()
@@ -71,10 +73,11 @@ async def init(request: Request, number: str = Form(), recipient: str = Form(), 
 
 
 @app.get("/questions/{call_id}", response_class=HTMLResponse)
-async def questions(request: Request, call_id: str):
+async def questions(request: Request, call_id: str, context=str):
     '''
     Page to view call history
     '''
+    questions = ContextManager.generate_questions_from_task(context)
     # generate questions
     return TEMPLATES.TemplateResponse(
         "questions.html",
@@ -82,7 +85,7 @@ async def questions(request: Request, call_id: str):
             "request": request,
             "call_id": call_id,
             "page": "questions",
-            "questions": []
+            "questions": questions
         }
     )
 
