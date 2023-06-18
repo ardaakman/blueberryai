@@ -32,7 +32,7 @@ load_dotenv()
     count_files_in_directory --> Count number of files in a directory, to set the name of the new file name.
 """
 
-def upload_file_to_wasabi(file_path, bucket_name):
+async def upload_file_to_wasabi(file_path, bucket_name):
     s3 = boto3.client('s3',
                       endpoint_url='https://s3.us-west-1.wasabisys.com',  # Use the correct endpoint URL for your Wasabi region
                       aws_access_key_id='6UQ6BKLP89DNA5G37191',  # Replace with your access key
@@ -100,12 +100,10 @@ def convert_speech_to_text_hume(recording_url):
 
 # Function to process the recording and generate a response
 def process_recording(recording_url):
-    print("Starting: process_recording...")
     # Convert recording to text using speech-to-text API or library
     # Here, let's assume we have a function called `convert_speech_to_text` for this purpose
     recipient_message = convert_speech_to_text(recording_url)
 
-    print("Generating response...", end="")
     # Generate a response using OpenAI
     print(recipient_message)
     # Old call
@@ -115,11 +113,10 @@ def process_recording(recording_url):
     print("Done!")
     print("\t Generated response: ", generated_response)
 
-    print("Saving response as audio...", end="")
     # Save the generated response as an audio url
     audio_url = save_generated_response_as_audio(generated_response)
-    print("Done!")
-    print("Sending response to recipient...", end="")
+    num_files = count_files_in_directory("outputs")
+    upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "bluberry-output" )
     return audio_url, generated_response
 
 
@@ -157,11 +154,3 @@ def save_generated_response_as_audio(generated_response):
     else:
         # Handle the error
         raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
-    
-    
-def post_to_client(message, sender):
-    url = "http://127.0.0.1:8201/post_to_client"
-    data = {"message": message, "sender": sender}
-    requests.post(url, data=data)
-
-

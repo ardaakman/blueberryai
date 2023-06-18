@@ -3,6 +3,7 @@ from flask import Flask, request
 from twilio.twiml.voice_response import VoiceResponse, Gather, Start, Connect, Stream, Stop
 from twilio.rest import Client
 from dotenv import load_dotenv
+import time
 import os
 import logging
 
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 for file in os.listdir(os.path.join(CURRENT_DIR, "outputs")):
     os.remove(os.path.join(CURRENT_DIR, "outputs", file))
 
-@app.route("/start_call", methods=['POST'])
+@app.route("/start_call", methods=['GET'])
 # @app.route("/outbound", methods=['GET'])
 def outbound_call():
     try:
@@ -47,12 +48,13 @@ def outbound_call():
 
 @app.route("/conversation", methods=['POST'])
 def conversation():
+    current_time = time.time()
     recording_url = request.values.get('RecordingUrl', None)
     response = VoiceResponse()
     if recording_url:
         recording_url = requests.get(recording_url, stream=True)
         recipient_message, text = handle_recording_input(recording_url)
-        print(text)
+        current_time = time.time()
         if len(text) > 0:
             response.pause()
             if "bye" in text.lower():
@@ -64,17 +66,19 @@ def conversation():
                         response.pause()
                         user_info = input(text.split('/user')[1])
                     recipient_message = user_info
-                # start = response.start()
-                # start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws')
-                response.play(recipient_message)
-                # stop = response.stop()
-                # stop.stream()
+                start = response.start()
+                start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws')
+                response.play(recipient_message)    
+                current_time = time.time()
+                stop = response.stop()
+                stop.stream()
     
     response.record(max_length=20, timeout=3, action='/conversation', play_beep=False, trim='trim-silence')
     return str(response)
 
 
 def handle_recording_input(response):
+    current_time = time.time()
     num_files = count_files_in_directory(CURRENT_DIR + "/outputs")
     # Ensure the request is successful
     if response.status_code == 200:
@@ -84,9 +88,9 @@ def handle_recording_input(response):
                 file.write(chunk)
     else:
         print('Failed to download the file.')
-
-    upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "blueberryai-input")
+    upload_file_to_wasabi(CURRENT_DIR + "/outputs/output_{}.mp3".format(num_files), "blueberryai-input")
     url_to_play, text = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{}.mp3".format(num_files))
+
     return url_to_play, text
 
 # def handle_recording():

@@ -1,6 +1,8 @@
+import speech_recognition as sr
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 app = FastAPI()
+r = sr.Recognizer()
 
 class ConnectionManager:
     def __init__(self):
@@ -24,15 +26,20 @@ manager = ConnectionManager()
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     print("Connection established.")
+    
+    recognizer = sr.Recognizer()
     try:
         while True:
-            data = await websocket.receive_text()
-            manager.data_received.append(data)
-            await manager.send_data(f"Message text was: {data}")
+            audio_data = await websocket.receive_bytes()
+            
+            # Convert the bytes to audio data
+            audio = sr.AudioData(audio_data, 44100, 2)  # Check your audio's sample rate & channels
+            
+            # Use the recognizer to transcribe the audio data to text
+            text = recognizer.recognize_google(audio)
+            
+            manager.data_received.append(text)
+            await manager.send_data(f"Transcribed text was: {text}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         print("Connection closed.")
-
-@app.get("/get_data")
-async def get_data():
-    return {"data": manager.data_received}
