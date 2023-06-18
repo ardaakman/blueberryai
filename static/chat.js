@@ -82,6 +82,8 @@ function endCall() {
             grayMessage("Call ended");
             // set button to disabled
             document.getElementById("end-call").disabled = true;
+            // set button to disabled
+            document.getElementById("save-info").disabled = true;
 
         } else {
             show_toast("Error Occured");

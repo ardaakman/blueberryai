@@ -48,7 +48,13 @@ class Chat:
             cur = conn.cursor()
             cur.execute("SELECT message, sender, id FROM chat WHERE call_id = ? ORDER BY id ASC", (self.call_id,))
             rows = cur.fetchall()
-            return [{'role': row[1], 'content': row[0]} for row in rows]
+            rows = [{'role': row[1], 'content': row[0]} for row in rows]
+            for row in rows:
+                if row['role'] == 'caller':
+                    row['role'] = 'assistant'
+                elif row['role'] == 'callee':
+                    row['role'] = 'user'
+            return rows
 
     def generate_agent_description(self, context):
         prompt = f"""
@@ -58,8 +64,10 @@ class Chat:
             You could use filler words like 'um' and 'uh' to sound more human. To end the call, just return 'bye'. For information you are unsure about, return "/user <question>".
             Here is some information about you:
         """
-        with open('info.txt', 'r') as f:
-            info = f.read()
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT personal_info FROM call_log WHERE id = ?", (USER_ID,))
+            info = cur.fetchone()[0]
         prompt += info
         print(prompt)
         return prompt
@@ -70,6 +78,10 @@ class Chat:
             cur = conn.cursor()
             cur.execute("INSERT INTO chat (call_id, message, sender) VALUES (?, ?, ?)", (self.call_id, message, role))
             conn.commit()
+        if role == 'caller':
+            role = 'assistant'
+        elif role == 'callee':
+            role = 'user'
 
         self.history.append({'role': role, 'content': message})
 
@@ -90,8 +102,6 @@ class Call:
     def __init__(self, call_id):
         self.call_id = call_id
         self.context, self.recipient = self.get_context()
-        if os.stat("info.txt").st_size == 0:
-            self.questions = self.generate_questions()
         self.chat = Chat(call_id, self.context)
         self.call_id = call_id
 
@@ -130,8 +140,8 @@ class Call:
         to = "9495016532"
         ngrog = "https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app"
         call = client.calls.create(
-            # url=f'''https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo/{self.call_id}''',
-            url=f'''{ngrog}/conversation/{self.call_id}''',
+            url=f'''https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo/{self.call_id}''',
+            # url=f'''{ngrog}/conversation/{self.call_id}''',
             to="+1" + to,
             from_="+18777192546"
         )
