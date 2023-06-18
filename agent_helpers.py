@@ -32,9 +32,9 @@ class ContextManager():
         prompt = f"""
 Given the context of {task}, what are some possible personal questions, 
 such as date of birth, account number, etc. that the customer service agent might ask the user?
-Phrase questions as key words, such as "Date of Birth". Give multiple questions seperated by a new line.
+Phrase questions as key words, such as "Date of Birth". 
 
-Limit your answers to {num_questions} questions.
+Limit your answers to {num_questions} questions. Do not number the questions. Just give questions seperated by a new line.
 """
         
         messages = [{"role": "user", "content": prompt}]
