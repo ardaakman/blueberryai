@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.websockets import WebSocket
-from twilio.helper_funcitons import *
+# from twilio.helper_funcitons import *
 from pydantic import BaseModel
 
 from pathlib import Path
@@ -15,11 +15,13 @@ import httpx
 import openai
 import os
 from config import *
+# import twilio
 from twilio.rest import Client
+
 
 from chat import ContextManager
 from agent_helpers import ContextManager
-from chat_agents import EfficientContextAgent
+# from chat_agents import EfficientContextAgent
 
 app = FastAPI()
 
@@ -137,32 +139,32 @@ class Call:
         )
         print(call.sid)
         
-class CallHandler():
-    def __init__(self, to_phone_number, recipient_name, task_context):
-        self.recipient = to_phone_number
-        self.task_context = task_context
-        self.recipient_name = recipient_name
+# class CallHandler():
+#     def __init__(self, to_phone_number, recipient_name, task_context):
+#         self.recipient = to_phone_number
+#         self.task_context = task_context
+#         self.recipient_name = recipient_name
         
-        self.context_manager = ContextManager()
-        self.chat_agent = EfficientContextAgent(task_context, self.recipient_name, self.context_manager)
+#         self.context_manager = ContextManager()
+#         self.chat_agent = EfficientContextAgent(task_context, self.recipient_name, self.context_manager)
     
-    def generate_questions(self):
-        return self.context_manager.generate_questions_from_task(self.task_context)
+#     def generate_questions(self):
+#         return self.context_manager.generate_questions_from_task(self.task_context)
 
-    def generate_response(self, response):
-        return self.chat_agent(response)
+#     def generate_response(self, response):
+#         return self.chat_agent(response)
     
-    def call(self):
-        client = Client(account_sid, auth_token)
-        to = self.recipient
-        to = "9495016532"
-        call = client.calls.create(
-            # url='https://handler.twilio.com/twiml/EH9c51bf5611bc2091f8d417b4ff44d104',
-            url='https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo',
-            to="+1" + to,
-            from_="+18777192546"
-        )
-        print(call.sid)
+#     def call(self):
+#         client = Client(account_sid, auth_token)
+#         to = self.recipient
+#         to = "9495016532"
+#         call = client.calls.create(
+#             # url='https://handler.twilio.com/twiml/EH9c51bf5611bc2091f8d417b4ff44d104',
+#             url='https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo',
+#             to="+1" + to,
+#             from_="+18777192546"
+#         )
+#         print(call.sid)
 
 async def make_http_request(url: str, data: dict):
     async with httpx.AsyncClient() as client:
@@ -275,8 +277,6 @@ async def upload_to_wasabi(request: Request, item: Item):
     await upload_to_wasabi(path, "blueberryai-input")
 
 
-
-
 @app.post("/update_personal_info")
 async def update_personal_info(request: Request):
     body = await request.json()
@@ -366,7 +366,7 @@ async def save_message(request: Request):
 
     # save to db
     call = Call(call_id)
-    call.chat.add_message(message, sender)
+    call.chat.add(message, sender)
     response_val = call.chat.generate(message)
 
     # send caller response
