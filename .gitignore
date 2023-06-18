@@ -135,6 +135,6 @@ dmypy.json
 templates/.DS_Store
 .DS_Store
 /rds_config.py
-utils.py
+# utils.py
 env.py
 venv
