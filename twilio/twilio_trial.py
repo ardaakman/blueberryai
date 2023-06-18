@@ -55,12 +55,6 @@ def conversation():
         logger.error("Error during conversation:", exc_info=True)
         return str(e)
 
-@app.route("/websocket", methods=['POST'])
-def handlewebsocket():
-    print("Handling websocket")
-    print(request.values)
-    return "OK"
-
 @app.route("/handle_recording", methods=['POST'])
 def handle_recording():
     global number_of_times_so_far
@@ -99,22 +93,6 @@ def handle_recording():
 
     return str(resp)
 
-@app.route("/ending", methods=['POST'])
-def ending():
-    try:
-        resp = VoiceResponse()
-        #fetch wasabi stuff and do recording.
-        url_to_play = process_recording("https://s3.us-west-1.wasabisys.com/calhacksaudio/output_0.mp3")
-        print(url_to_play)
-        resp.play(url_to_play, action="/handle_ending")
-        resp.say("Thank you for your time! Have a wonderful day.")
-        return str(resp)
-    
-    except Exception as e:
-        logger.error("Error during ending:", exc_info=True)
-        return str(e)
-
-
 @app.route("/handle_ending", methods=['POST'])
 def handle_ending():
     try:
@@ -137,29 +115,7 @@ def inbound_call():
         logger.error("Error during inbound call:", exc_info=True)
         return str(e)
 
-@app.route("/process_speech", methods=['POST'])
-def process_speech():
-    try:
-        speech_result = request.form.get('SpeechResult', '')
-        resp = VoiceResponse()
-        print("here")
-        if 'sales' in speech_result.lower():
-            resp.say('You mentioned sales. Redirecting your call to our sales department.', voice="Polly.Stephen-Neural", language="en-US")
-            # Add the dial logic here if necessary
-        elif 'support' in speech_result.lower():
-            resp.say('You mentioned support. Redirecting your call to our support department.', voice="Polly.Stephen-Neural", language="en-US")
-            # Add the dial logic here if necessary
-        else:
-            resp.say("I did not understand. Please say it again.")
-            gather = Gather(input='speech', action='/process_speech')
-            gather.play('https://storage.googleapis.com/fliki/media/api/642f37f4bac5767aff0b07bc/6467540cd30647acad0d8897.mp3')
-            print("Done with response. Moving onto input.")
-            resp.append(gather)
-            resp.record(maxLength="30", action="/handle_recording")
 
-        return str(resp)
-    except Exception as e:
-        logger.error("Error during speech processing:", exc_info=True)
         return str(e)
 
 if __name__ == "__main__":
