@@ -19,12 +19,17 @@ socket.addEventListener("close", (event) => {
 socket.addEventListener("message", (event) => {
 
     var jsonData = JSON.parse(event.data);
-
+    var jsonData = jsonData.replace(/\\/g, "");
+    var jsonData = JSON.parse(jsonData);
     // Access the properties of the JavaScript object
     var message = jsonData.message;
     var sender = jsonData.sender;
 
-    console.log("Message from server ", event.data);
+    console.log("Message from server ", jsonData);
+
+    // print  message
+    console.log("Message: ", message);
+    
     var chat = document.getElementById("chat");
     var chatBubble = document.createElement("div");
     chatBubble.classList.add("chat-bubble");

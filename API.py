@@ -1,5 +1,5 @@
 import asyncio
-from fastapi import FastAPI, APIRouter, Request, Form, WebSocket, WebSocketDisconnect, BackgroundTasks
+from fastapi import FastAPI, APIRouter, Request, Form, WebSocket, WebSocketDisconnect, BackgroundTasks, Body
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
@@ -36,9 +36,17 @@ USER_ID = 1
 openai.api_key = openai_api_key
 
 class Chat:
-    def __init__(self, context):
+    def __init__(self, call_id, context):
+        self.call_id = call_id
         self.agent_description = self.generate_agent_description(context)
-        self.history = [{'role': 'system', 'content': self.agent_description}]
+        self.history = [{'role': 'system', 'content': self.agent_description}] + self.get_history()
+
+    def get_history(self):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT message, sender, id FROM chat WHERE call_id = ? ORDER BY id ASC", (self.call_id,))
+            rows = cur.fetchall()
+            return [{'role': row[1], 'content': row[0]} for row in rows]
 
     def generate_agent_description(self, context):
         prompt = f"""
@@ -55,6 +63,12 @@ class Chat:
         return prompt
 
     def add(self, message, role='user'):
+        # save to db
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("INSERT INTO chat (call_id, message, sender) VALUES (?, ?, ?)", (self.call_id, message, role))
+            conn.commit()
+
         self.history.append({'role': role, 'content': message})
 
     def generate(self):
@@ -73,13 +87,20 @@ class Chat:
         return True
     
 class Call:
-    def __init__(self, to, context, call_id):
-        self.recipient = to
-        self.context = context
+    def __init__(self, call_id):
+        self.call_id = call_id
+        self.context, self.recipient = self.get_context()
         if os.stat("info.txt").st_size == 0:
             self.questions = self.generate_questions()
-        self.chat = Chat(context)
+        self.chat = Chat(call_id, self.context)
         self.call_id = call_id
+
+    def get_context(self):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT context, recipient FROM call_log WHERE id = ?", (self.call_id,))
+            context, recipient = cur.fetchone()
+        return context, recipient
 
     def generate_questions(self):
         try:
@@ -289,18 +310,18 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
 
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT phone_number, context, id, recipient, personal_info FROM call_log WHERE id = ?", (call_id,))
+        cur.execute("SELECT id, recipient, personal_info FROM call_log WHERE id = ?", (call_id,))
         call = cur.fetchone()
 
-    new_call = Call(call[0], call[1], call[2])
-    question_answers = call[4]
+    new_call = Call(call[0])
+    question_answers = call[2]
 
     print(question_answers)
     
     question_answers = question_answers.split('\n')
     question_answers = [qa.split(':') for qa in question_answers]
     
-    # call.call()
+    new_call.call()
     # data = {
     #     'call_id': call_id,
     #     'to': call[0],
@@ -321,24 +342,37 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
             "page": "call",
             'call_id': call_id,
             'question_answers': question_answers,
-            'recipient': call[3]
+            'recipient': call[1]
         }
     )
 
-# @app.post("/save_message")
-# def save_message(request: Request):
-#     '''
-#     Send data to client
-#     '''
-#     # save to db
+@app.post("/save_message")
+async def save_message(request: Request):
+    '''
+    Send data to client
+    '''
+    data = await request.json()
+    print(data)
+    for key in data.keys():
+        print(key, data[key])
 
-#     # send to client
-#     response_val = "Hi how are you doing today?"
+    # define variables
+    message = data["message"]
+    call_id = data["call_id"]
+    sender = data["sender"]
 
-#     # generate respoinse
-#     data = {'message': message, 'call_id': call_id, 'sender': sender}
-#     send_data_to_clients(json.dumps(data))
-#     return response_val
+    # send to client
+    await send_data_to_clients(json.dumps(data))
+
+    # save to db
+    call = Call(call_id)
+    call.chat.add_message(message, sender)
+    response_val = call.chat.generate(message)
+
+    # send caller response
+    data = {"message": response_val, "call_id": call_id, "sender": 'caller'}
+    await send_data_to_clients(json.dumps(data))
+    return response_val
 
 
 # SOCKETS

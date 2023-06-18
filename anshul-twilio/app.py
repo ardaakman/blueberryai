@@ -9,6 +9,7 @@ import requests
 import uuid
 from twilio.rest import Client
 from configs import *
+import json
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -36,11 +37,9 @@ def convo(call_id: str):
     response = VoiceResponse()
     if recording_url:
         text = voice_to_text(recording_url)
-        print("voice to text")
         print(text)
         if len(text) > 0:
             response.pause()
-            print("saving message with call id", call_id)
             value = save_message(call_id, text, 'callee') # value = chat.generate() [TODO]
             value = "Hello, how can I help you?"
             if "bye" in value.lower():
@@ -53,7 +52,7 @@ def convo(call_id: str):
                         response.pause()
                         user_info = input(value.split('/user')[1])
                     value = user_info
-                value = save_message(call_id, value, 'caller') # [TODO]
+                # value = save_message(call_id, value, 'caller') # [TODO]
                 response.say(value)
     
     response.record(max_length=20, timeout=3, action=f'/convo/{call_id}', play_beep=False, trim='trim-silence')
@@ -63,7 +62,7 @@ def save_message(call_id, message, sender):
     print('save_message')
     url = "http://127.0.0.1:8201/save_message"
     data = {"message": message, "sender": sender, "call_id": call_id}
-    response_val = requests.post(url, data) 
+    response_val = requests.post(url, data = json.dumps(data)) 
     print(response_val.text)
     return response_val.text
 
