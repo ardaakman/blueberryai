@@ -68,7 +68,7 @@ class CallHandler():
         # Return response
         return agent_response
     
-    def call(self, customer_service_respond):
+    def __call__(self, customer_service_respond):
         return self.generate_response(customer_service_respond)
         
 
