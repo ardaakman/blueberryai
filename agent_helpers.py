@@ -29,7 +29,7 @@ class CallHandler():
         return task, recipient
     
     def load_dialogue(self):
-        def format_dialogue_to_gpt(dialogue, customer_tag="customer", agent_tag="agent"):
+        def format_dialogue_to_gpt(dialogue, customer_tag="callee", agent_tag="caller"):
             result = []
             for sender, message in dialogue:
                 if sender == customer_tag:
