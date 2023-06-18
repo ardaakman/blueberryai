@@ -4,6 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.websockets import WebSocket
+from twilio.helper_funcitons import *
+from pydantic import BaseModel
 
 from pathlib import Path
 from utils import *
@@ -20,6 +22,10 @@ from agent_helpers import ContextManager
 from chat_agents import EfficientContextAgent
 
 app = FastAPI()
+
+class Item(BaseModel):
+    data: dict
+
 
 api_router = APIRouter()
 BASE_PATH = Path(__file__).resolve().parent
@@ -237,6 +243,17 @@ async def questions(request: Request, call_id: str = Form()):
         conn.commit()
 
     return RedirectResponse(f"/call/{call_id}", status_code=303)
+
+#Use server to relieve twilio.
+@app.post("/upload_to_wasabi")
+async def upload_to_wasabi(request: Request, item: Item):
+    '''
+    Upload recording to wasabi
+    '''
+    path = item["path"]
+    await upload_to_wasabi(path, "blueberryai-input")
+
+
 
 
 @app.post("/update_personal_info")
