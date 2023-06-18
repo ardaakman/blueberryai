@@ -75,6 +75,9 @@ function endCall() {
             console.log("Call ended");
             show_toast("Call ended");
             grayMessage("Call ended");
+            // set button to disabled
+            document.getElementById("end-call").disabled = true;
+            
         } else {
             show_toast("Error Occured");
         }
