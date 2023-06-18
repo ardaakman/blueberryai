@@ -1,5 +1,6 @@
 import os
 import openai
+from utils import *
 
 from dotenv import load_dotenv
 
@@ -21,8 +22,14 @@ class ContextManager():
             if os.path.isfile(file_path) and file_path.endswith('.txt'):
                 self.load_from_file(file_path)
     
-    def load_from_database(self):
-        pass
+    def sync_to_database(self, call_id):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT personal_info FROM call_log WHERE id = ?", (call_id,))
+            question_answers = cur.fetchone()[0]
+    
+        question_answers = question_answers.split('\n')
+        self.context = question_answers
     
     def load_from_list(self, list_of_qa):
         self.context.extend([f"{q}: {a}" for q,a in list_of_qa])
