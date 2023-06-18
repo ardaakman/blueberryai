@@ -45,23 +45,26 @@ class OpenAIChatEngine(ABC):
         self.agent_description = ""
         self.messages.append({"role": "system", "content": self.agent_description})
         
-    def __call__(self, prompt):
-        self.messages.append({"role": "user", "content": prompt})
-        
-        completion = openai.ChatCompletion.create(
-            model=self.model,
-            messages=self.messages
-        )
-        return completion.choices[0].message
+    def __call__(self, prompt, counter=0):        
+        try:
+            self.messages.append({"role": "user", "content": prompt})
+            
+            completion = openai.ChatCompletion.create(
+                model=self.model,
+                messages=self.messages
+            )
+            return completion.choices[0].message
+        except:
+            if counter < 3:
+                return self.__call__(prompt, counter+1)
+            else:
+                return "I'm sorry, I'm having trouble understanding you. Could you rephrase your request?"
     
 class ContextEnhancer(OpenAIChatEngine):
     def set_agent_config(self):
         self.agent_description = f"""
-            Put yourself in the shoes of a customer service agent for {self.recipient}.
-            A new caller wants to {self.task}. What questions might you ask them? 
-            What personal information would you need to know? 
-            
-            In your response, hva e 
+            Put yourself in the shoes of a customer service agent for {self.recipient}. 
+            Your goal is to be able to figure out what information you need from the customer to finish the task.
         """
         self.messages = []
         self.messages.append({"role": "system", "content": self.agent_description})
