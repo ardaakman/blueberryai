@@ -65,7 +65,13 @@ def convert_speech_to_text_whisper(recording_url):
     response = requests.get(recording_url)
     audio_file = response.content
 
-    transcript = openai.Audio.transcribe("whisper-1", audio_file)
+    # Save the audio data to a file
+    with open("temp.wav", "wb") as file:
+        file.write(audio_file)
+
+    # Transcribe the audio using Whisper API
+    with open("temp.wav", "rb") as file:
+        transcript = openai.Audio.transcribe("whisper-1", file)
     
     return transcript
     
