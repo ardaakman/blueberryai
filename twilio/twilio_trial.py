@@ -79,14 +79,17 @@ def handle_recording():
     upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "blueberryai-input")
     resp= VoiceResponse()
     start = resp.start()
-    start.stream(url="https://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws")
+    start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws')
     print(num_files)
     url_to_play = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{}.mp3".format(num_files))
     # start.stream()
     resp.play(url_to_play)
     stop= resp.stop()
     stop.stream()
-    #Jump back to conversation for now.
+    # Get the data from the FastAPI application
+    response = requests.get('https://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/get_data')
+    data_received = response.json()
+    print(f"Data received from WebSocket: {data_received}")
     number_of_times_so_far += 1
     resp.redirect('/conversation')
     #Try using the recording url from wasabi to create a response.

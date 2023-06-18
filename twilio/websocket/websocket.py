@@ -5,6 +5,7 @@ app = FastAPI()
 class ConnectionManager:
     def __init__(self):
         self.active_connections = []
+        self.data_received = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -22,11 +23,16 @@ manager = ConnectionManager()
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
-    print("here")
+    print("Connection established.")
     try:
         while True:
             data = await websocket.receive_text()
+            manager.data_received.append(data)
             await manager.send_data(f"Message text was: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        await manager.send_data(f"Client left the chat")
+        print("Connection closed.")
+
+@app.get("/get_data")
+async def get_data():
+    return {"data": manager.data_received}
