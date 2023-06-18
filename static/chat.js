@@ -1,9 +1,10 @@
 // on wndow load
+var ringing = false;
 window.onload = function() {
     // get call id from url
     // show grayMessage
     const recipient = document.getElementById("recipient").innerText;
-    grayMessage("Chat started with " + recipient);
+    grayMessage("Ringing " + recipient, true);
 }
 
 socket = new WebSocket(`ws://localhost:8201/websocket`);
@@ -29,7 +30,8 @@ socket.addEventListener("message", (event) => {
 
     // print  message
     console.log("Message: ", message);
-    
+    // grayMessage("Call started with " + recipient);
+    ringingOff();
     var chat = document.getElementById("chat");
     var chatBubble = document.createElement("div");
     chatBubble.classList.add("chat-bubble");
@@ -48,10 +50,13 @@ socket.addEventListener("message", (event) => {
     chat.scrollTop = chat.scrollHeight;
 });
 
-function grayMessage(message) {
+function grayMessage(message, ringing=false) {
     var chat = document.getElementById("chat");
     var chatBubble = document.createElement("div");
     chatBubble.classList.add("chat-bubble-large");
+    if (ringing) {
+    chatBubble.classList.add("chat-ringing");
+    }
     var chatText = document.createElement("div");
     chatText.classList.add("chat-text");
     var chatTextP = document.createElement("p");
@@ -61,6 +66,15 @@ function grayMessage(message) {
     chat.appendChild(chatBubble);
     chat.scrollTop = chat.scrollHeight;
 }
+
+function ringingOff() {
+    // remove chat-ringing class from all elements with it
+    var elements = document.getElementsByClassName("chat-ringing");
+    while(elements.length > 0){
+        elements[0].classList.remove("chat-ringing");
+    }
+}
+
 
 
 function endCall() {

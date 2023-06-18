@@ -29,7 +29,7 @@ def voice_to_text(url):
 
     # Delete the audio file
     os.remove(file_name)
-    
+
     
     return transcript['text']
 
@@ -42,11 +42,16 @@ def convo(call_id: str):
     if recording_url:
         text = voice_to_text(recording_url)
         print(text)
-        if len(text) > 0:
+        if len(text) > 0 and text != "you":
             response.pause()
             value = save_message(call_id, text, 'callee') # value = chat.generate() [TODO]
+            value = json.loads(value)
+            print(value)
+            print(type(value))
+            value = json.loads(value)
+            value, url = value["message"], value["url"]
             if "bye" in value.lower():
-                response.say(value)
+                response.play(url)
                 response.hangup()
             else:
                 if "/user" in value.lower():
@@ -55,8 +60,7 @@ def convo(call_id: str):
                         response.pause()
                         user_info = input(value.split('/user')[1])
                     value = user_info
-                # value = save_message(call_id, value, 'caller') # [TODO]
-                response.say(value)
+                response.play(url)
     
     response.record(max_length=20, timeout=3, action=f'/convo/{call_id}', play_beep=False, trim='trim-silence')
     return str(response)

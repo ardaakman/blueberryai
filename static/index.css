@@ -239,3 +239,28 @@ body {
 .nav-link {
   color: #ffffff !important;
 }
+
+/* pulsing animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.chat-ringing {
+    /* display: inline-block;
+    background-color: #0099ff;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%; */
+    animation: pulse 2s infinite;
+}

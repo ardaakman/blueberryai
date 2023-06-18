@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.websockets import WebSocket
-# from twilio.helper_funcitons import *
+
 from pydantic import BaseModel
 
 from pathlib import Path
@@ -60,8 +60,8 @@ class Chat:
         prompt = f"""
             You're imitating a human that is trying to {context}. 
             You're on a call with customer service.  
-            Sound like a human and use your context to return the appropriate response. Keep responses short, simple, and informal.
-            You could use filler words like 'um' and 'uh' to sound more human. To end the call, just return 'bye'. For information you are unsure about, return "/user <question>".
+            Sound like a human and use your context to return the appropriate response. Keep responses short, simple, and informal. Only give information when it is asked. 
+            You could use filler words like 'um' and 'uh' to sound more human. When the call is finished, include the word 'bye'. For information you are unsure about, return "/user <question>".
             Here is some information about you:
         """
         with get_db_connection() as conn:
@@ -371,13 +371,14 @@ async def save_message(request: Request):
 
     # send to client
     await send_data_to_clients(json.dumps(data))
-
+    print("sent to client")
     # save to db
     call = Call(call_id)
     
     # Interface with the agent
     agent = CallHandler(call_id)
     response_val = agent(message)
+    url = save_generated_response_as_audio(response_val)
     
     # Update the database
     call.chat.add(message, sender)
@@ -386,13 +387,15 @@ async def save_message(request: Request):
     # send caller response
     data = {"message": response_val, "call_id": call_id, "sender": 'caller'}
     await send_data_to_clients(json.dumps(data))
-    return response_val
+    return_str = {"url": url, "message": response_val}
+    return json.dumps(return_str)
 
 
 # SOCKETS
 sockets = []
 async def send_data_to_clients(data):
     # Iterate over each connected websocket
+    print("sending data to clients")
     for websocket in sockets:
         try:
             data = json.dumps(data)
@@ -463,3 +466,36 @@ async def end_call(request: Request):
 
 #     return {'status': 'success'}
 
+def save_generated_response_as_audio(generated_response):
+    conversational_style_id = "6434632c9f50eacb088edafd"
+    marcus_speaker_id = "643463179f50eacb088edaec"
+
+    url = "https://api.fliki.ai/v1/generate/text-to-speech"
+    headers = {
+        "Authorization": f"Bearer {os.getenv('FLIKI_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "content": generated_response,
+        "voiceId": marcus_speaker_id,
+        "voiceStyleId": conversational_style_id
+    }
+    
+    response = requests.post(url, headers=headers, json=data)
+
+    # Check the response status code
+    if response.status_code == 200:
+        # Process the response
+        audio_data = response.content
+        # Do something with the audio data
+        response_dict = json.loads(audio_data)
+
+        # Now you can access the dictionary elements
+        success = response_dict["success"]
+        audio_url = response_dict["data"]["audio"]
+        duration = response_dict["data"]["duration"]
+        
+        return audio_url
+    else:
+        # Handle the error
+        raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
