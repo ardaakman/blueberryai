@@ -12,6 +12,9 @@ import sys
 sys.path.append('../')  # Add the parent directory to the system path
 from chat import Interaction
 
+interaction = Interaction(task="create a new account", context_directory="../data/ekrem/")
+interaction.recipient = "People's Gas"
+
 # Load the variables from the .env file
 load_dotenv()
 
@@ -31,12 +34,18 @@ client = Client(account_sid, auth_token)
 # Set up OpenAI
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
+# ngrok_url = request.url_root
+ngrok_url = "https://3dce-2607-f140-6000-11-7042-9d7-474a-1bff.ngrok-free.app"
+
 # Function to handle incoming call
+@app.route('/handle_incoming', methods=['POST'])
 def handle_incoming_call():
+    print("Handling incoming call...")
     response = VoiceResponse()
     response.say("Hello, how can I assist you?")
-    response.record(max_length=30, action='/process_recording')
-    return str(response)
+    print("Trying to record...", end="")
+    response.record(max_length=30, action=f'{ngrok_url}process_recording')
+    print("Done.")
 
 def convert_speech_to_text(recording_url):
     url = "https://api.hume.ai/v0/batch/jobs"
@@ -53,19 +62,27 @@ def convert_speech_to_text(recording_url):
 
 # Function to process the recording and generate a response
 def process_recording(recording_url):
+    print("Starting: process_recording...")
     # Convert recording to text using speech-to-text API or library
     # Here, let's assume we have a function called `convert_speech_to_text` for this purpose
     recipient_message = convert_speech_to_text(recording_url)
 
+    print("Generating response...", end="")
     # Generate a response using OpenAI
     generated_response = interaction(recipient_message)
+    print("Done!")
+    print("\t Generated response: ", generated_response)
 
+    print("Saving response as audio...", end="")
     # Save the generated response as an audio url
     audio_url = save_generated_response_as_audio(generated_response)
+    print("Done!")
 
+    print("Sending response to recipient...", end="")
     # Respond to the recipient with the generated answer
     response = VoiceResponse()
     response.play(audio_url)
+    print("Done!")
     response.record(max_length=30, action='/process_recording')
     return str(response)
 
@@ -107,21 +124,30 @@ def save_generated_response_as_audio(generated_response):
 # Twilio webhook to process the recording and generate a response
 @app.route('/process_recording', methods=['POST'])
 def process_recording_webhook():
+    print("Processing process_recording_webhook...")
     recording_url = request.form['RecordingUrl']
     response = process_recording(recording_url)
     return response
 
-# Start the Flask server to listen for incoming requests
-if __name__ == '__main__':
-    app.run()
+@app.route('/call', methods=['GET'])
+def call():
+    print("Calling...")
+    
+    # Create a Twilio call
+    twiml = VoiceResponse()
+    twiml.say("Hello, how can I assist you?")
+    twiml.record(maxLength="30", action="/handle_incoming")
     
     # Create a Twilio call
     call = client.calls.create(
-        twiml=handle_incoming_call(),
+        twiml=str(twiml),
         to=recipient_phone_number,
         from_=twilio_phone_number
     )
-    
-    interaction = Interaction(task="create a new account", context_directory="../data/ekrem/")
-    interaction.recipient = "People's Gas"
+    return "Calling..."
+
+# Start the Flask server to listen for incoming requests
+if __name__ == '__main__':
+    app.run()
+
 
