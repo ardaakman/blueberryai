@@ -64,6 +64,7 @@ def convert_speech_to_text(recording_url):
 def convert_speech_to_text_whisper(recording_url):
     # Download the audio file from the URL
     response = requests.get(recording_url)
+    print(recording_url)
     audio_file = response.content
 
     # Save the audio data to a file
