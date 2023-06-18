@@ -1,16 +1,21 @@
+import time
 from flask import Flask, request
-from twilio.twiml.voice_response import VoiceResponse, Gather
+from twilio.twiml.voice_response import VoiceResponse, Gather, Start, Connect, Stream
 from twilio.rest import Client
 from dotenv import load_dotenv
 import os
 import logging
 
+from helper_funcitons import *
+
 # Load environment variables from .env file
 load_dotenv()
 
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+
 # Twilio account credentials
-account_sid = os.getenv("SID")
-auth_token = os.getenv("TWILIO_AUTH")
+account_sid = os.getenv("ACCOUNT_SID")
+auth_token = os.getenv("AUTH_TOKEN")
 client = Client(account_sid, auth_token)
 
 app = Flask(__name__)
@@ -24,7 +29,7 @@ def outbound_call():
     try:
         logger.info("Outbound call initiated.")
         call = client.calls.create(
-            url=request.url_root + "process_speech",  # Set the URL to the conversation endpoint
+            url="https://fdcf-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/" + "conversation",  # Set the URL to the conversation endpoint
             from_='+18448925795',
             to='+15104672510'
         )
@@ -37,14 +42,48 @@ def outbound_call():
 def conversation():
     try:
         resp = VoiceResponse()
-        gather = Gather(input='speech', action='/process_speech', method='POST')
-        gather.say('Hello, welcome to the conversation. Please tell us the reason for your call.')
-        resp.append(gather)
+        resp.say("Hi, tell us the problem!")
+        resp.record(maxLength="30", action="/handle_recording")
         return str(resp)
     except Exception as e:
         logger.error("Error during conversation:", exc_info=True)
         return str(e)
 
+@app.route("/websocket", methods=['POST'])
+def handlewebsocket():
+    print("Handling websocket")
+    print(request.values)
+    return "OK"
+
+@app.route("/handle_recording", methods=['POST'])
+def handle_recording():
+    print("Dealing with recordings")
+    recording_url = request.values.get('RecordingUrl', None)
+    response = requests.get(recording_url, stream=True)
+    print("creating a response")
+
+    num_files = count_files_in_directory(CURRENT_DIR + "/outputs")
+    # Ensure the request is successful
+    if response.status_code == 200:
+        # Open the file in write-binary mode and write the response content to it
+        with open('outputs/output_{}.mp3'.format(num_files), 'wb') as file:
+            for chunk in response.iter_content(chunk_size=1024):
+                file.write(chunk)
+    else:
+        print('Failed to download the file.')
+
+    upload_file_to_wasabi("outputs/output_{}.mp3".format(num_files), "calhacksaudio")
+    resp= VoiceResponse()
+    resp.say("Give me one moment please.")
+    resp.pause(5)
+    # Now you can use the 'recording_url' to download and save the file locally,
+    # or store the URL somewhere to access the recording later.
+    # For example, let's just print it:
+    resp.say("Thank you for your message. Goodbye.", action='/conversation')
+    return str(resp)
+
+
+# Below here is mostly for testing stuff out.
 @app.route("/inbound", methods=['POST'])
 def inbound_call():
     try:
@@ -56,21 +95,6 @@ def inbound_call():
     except Exception as e:
         logger.error("Error during inbound call:", exc_info=True)
         return str(e)
-
-@app.route("/handle_recording", methods=['POST'])
-def handle_recording():
-    print("Dealing with recordings")
-    recording_url = request.values.get('RecordingUrl', None)
-
-    # Now you can use the 'recording_url' to download and save the file locally,
-    # or store the URL somewhere to access the recording later.
-    # For example, let's just print it:
-    print("Recording URL: " + recording_url)
-
-    resp = VoiceResponse()
-    resp.say("Thank you for your message. Goodbye.")
-    return str(resp)
-
 
 @app.route("/process_speech", methods=['POST'])
 def process_speech():
