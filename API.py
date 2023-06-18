@@ -102,7 +102,7 @@ async def questions(request: Request, call_id: str = Form()):
 
 
 @app.get("/call/{call_id}", response_class=HTMLResponse)
-async def call(request: Request, call_id: str):
+async def call(request: Request, call_id: str, background_tasks: BackgroundTasks):
     '''
     Page to view ongoinng call
     ''' 
