@@ -4,7 +4,7 @@
 <input type="hidden" id="call_id" value="{{call_id}}">
 <div class="row">
     <div class="col-md-5">
-        <div class="center-menu">
+        <div class="center-menu" style="overflow-y: auto;">
             <div class="phone-heading">
                 <div class="row">
                     <div class="col-7">
@@ -15,12 +15,18 @@
                 </div>
             </div>
             <hr>
-            <div class="mb-3">
+            <!-- <div class="mb-3">
                 <label for="message" class="form-label">Message</label>
                 <textarea class="form-control" name="message" id="message" rows="3"></textarea>
+            </div> -->
+            {% for q in question_answers %}
+            <div class="mb-3">
+                <label for="exampleInputEmail1" class="form-label">{{q[0]}}</label>
+                <input type="text" class="form-control" id="{{q[0]}}" value="{{q[1]}}" aria-describedby="emailHelp">
             </div>
-            <div>
-                <button type="button" class="btn btn-primary mb-3" onclick="sendMessage()">Send</button>
+            {% endfor %}
+            <div style="position: absolute;bottom:1rem">
+                <button type="button" class="btn btn-primary mb-3" onclick="saveInfo()">Save</button>
                 <button type="button" class="btn btn-danger mb-3" onclick="endCall()">End Call</button>
              </div>
             <!-- <div class="form-check form-switch">

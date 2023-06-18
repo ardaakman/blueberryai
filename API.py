@@ -138,7 +138,6 @@ class CallHandler():
         print(call.sid)
         
 
-
 async def make_http_request(url: str, data: dict):
     async with httpx.AsyncClient() as client:
         response = await client.post(url, data=data)
@@ -199,7 +198,6 @@ async def questions(request: Request, call_id: str):
     '''
     Page to view call history
     '''
-
     with get_db_connection() as conn:
         cur = conn.cursor()
         cur.execute("SELECT context FROM call_log WHERE id = ?", (call_id,))
@@ -231,6 +229,14 @@ async def questions(request: Request, call_id: str = Form()):
         if key != "call_id":
             question_answer_pairs.append(f'''{key}: {body[key]}''')
 
+    # convert question_answer_pairs to str
+    question_answer_pairs = "\n".join(question_answer_pairs)
+
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE call_log SET personal_info = ? WHERE id = ?", (question_answer_pairs, call_id))
+        conn.commit()
+
     return RedirectResponse(f"/call/{call_id}", status_code=303)
 
 
@@ -248,7 +254,16 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
         call = cur.fetchone()
 
     call = Call(call[0], call[1], call[2])
-    call.call()
+
+    with get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT personal_info FROM call_log WHERE id = ?", (call_id,))
+        question_answers = cur.fetchone()[0]
+    
+    question_answers = question_answers.split('\n')
+    question_answers = [qa.split(':') for qa in question_answers]
+    
+    # call.call()
     # data = {
     #     'call_id': call_id,
     #     'to': call[0],
@@ -267,7 +282,8 @@ async def call(request: Request, call_id: str, background_tasks: BackgroundTasks
         {
             "request": request,
             "page": "call",
-            'call_id': call_id
+            'call_id': call_id,
+            'question_answers': question_answers
         }
     )
 

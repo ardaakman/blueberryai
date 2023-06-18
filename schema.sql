@@ -5,6 +5,7 @@ CREATE TABLE call_log (
     recipient TEXT,
     phone_number TEXT,
     context TEXT,
+    personal_info TEXT,
     created DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

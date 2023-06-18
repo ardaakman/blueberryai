@@ -81,22 +81,22 @@ function endCall() {
     );
 }
 
-function sendMessage() {
+function saveInfo() {
     const call_id = document.getElementById("call_id").value;
-    const message = document.getElementById("message").value;
+    // const message = document.getElementById("message").value;
     // fetch post
-    fetch("/send_message", {
+    console.log("Info Updated");
+    fetch("/update_personal_info", {
         method: "POST",
         body: JSON.stringify({
-            call_id: call_id,
-            message: message
+            call_id: call_id
         })
     })
     .then(response => response.json())
     .then(result => {
         console.log(result)
         if (result.status == 'success') {
-            console.log("Message sent");
+            console.log("Info Updated");
             var chat = document.getElementById("chat");
             var chatBubble = document.createElement("div");
             chatBubble.classList.add("chat-bubble");
