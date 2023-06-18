@@ -13,21 +13,32 @@ class CallHandler():
     def __init__(self, call_id):
         self.call_id = call_id
         
-        self.recipient, self.task_context = self.retrieve_task_and_recipient()
+        self.recipient, self.task_context = self.retrieve_task_and_recipient(self.call_id)
         
         self.context_manager = ContextManager()
         self.context_manager.sync_to_database(call_id)
         
         self.chat_agent = EfficientContextAgent(self.task_context, self.recipient, self.context_manager)
     
-    def retrieve_task_and_recipient(self):
+    @staticmethod
+    def retrieve_task_and_recipient_from_db(call_id):
         with get_db_connection() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT context, recipient FROM call_log WHERE id = ?", (self.call_id,))
+            cur.execute("SELECT context, recipient FROM call_log WHERE id = ?", (call_id,))
             task, recipient = cur.fetchone()
         
         return task, recipient
     
+    @staticmethod
+    def retrieve_dialogue_from_db(call_id):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT id, sender, message FROM chat WHERE call_id = ? ORDER BY id ASC", (call_id,))
+            rows = cur.fetchall()
+
+        dialogue = [(row['sender'], row['message']) for row in rows]
+        return dialogue
+        
     def load_dialogue(self):
         def format_dialogue_to_gpt(dialogue, customer_tag="callee", agent_tag="caller"):
             result = []
@@ -42,12 +53,7 @@ class CallHandler():
                 result.append(entry)
             return result
             
-        with get_db_connection() as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT id, sender, message FROM chat WHERE call_id = ? ORDER BY id ASC", (self.call_id,))
-            rows = cur.fetchall()
-
-        dialogue = [(row['sender'], row['message']) for row in rows]
+        dialogue = self.retrieve_dialogue_from_db(self.call_id)
         gpt_dialogue_history = format_dialogue_to_gpt(dialogue)
         
         return gpt_dialogue_history
@@ -141,6 +147,34 @@ You are a personal assistant. You're listening to a conversation between a human
 \"\"\"
 """
         return prompt
+    
+    def get_dialogue_history_from_agent(self, agent):
+        dialogue_history = agent.dialogue_history
+        
+        dialogue = ""
+        for dialogue_dict in dialogue_history:
+            if dialogue_dict["role"] == "user":
+                dialogue += "\n" + dialogue_dict["content"]
+            elif dialogue_dict["role"] == "assistant":
+                dialogue += "\n" + "Human" + dialogue_dict["content"]
+        return dialogue
+
+    def get_dialogue_history_from_database(self, call_id): 
+        def format_dialogue(dialogue, customer_tag="callee", agent_tag="caller"):
+            result = []
+            for sender, message in dialogue:
+                if sender == customer_tag:
+                    entry = {"role": "user", "content": f"Customer Service Agent: {message}"}
+                elif sender == agent_tag:
+                    entry = {"role": "assistant", "content": f"{message}"}
+                else:
+                    raise Exception("Invalid sender tag.")
+                
+                result.append(entry)
+            return result
+        
+        dialogue = CallHandler.retrieve_dialogue_from_db(call_id)
+        
     
     def __call__(self, agent):
         dialogue_history = agent.dialogue_history
