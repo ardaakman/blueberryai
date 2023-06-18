@@ -16,8 +16,6 @@ from configs import *
 from twilio.rest import Client
 
 from chat import ContextManager
-from agent_helpers import ContextManager
-from chat_agents import EfficientContextAgent
 
 app = FastAPI()
 
@@ -109,34 +107,6 @@ class Call:
             from_="+18777192546"
         )
         print(call.sid)
-        
-class CallHandler():
-    def __init__(self, to_phone_number, recipient_name, task_context):
-        self.recipient = to_phone_number
-        self.task_context = task_context
-        self.recipient_name = recipient_name
-        
-        self.context_manager = ContextManager()
-        self.chat_agent = EfficientContextAgent(task_context, self.recipient_name, self.context_manager)
-    
-    def generate_questions(self):
-        return self.context_manager.generate_questions_from_task(self.task_context)
-
-    def generate_response(self, response):
-        return self.chat_agent(response)
-    
-    def call(self):
-        client = Client(account_sid, auth_token)
-        to = self.recipient
-        to = "9495016532"
-        call = client.calls.create(
-            # url='https://handler.twilio.com/twiml/EH9c51bf5611bc2091f8d417b4ff44d104',
-            url='https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo',
-            to="+1" + to,
-            from_="+18777192546"
-        )
-        print(call.sid)
-        
 
 
 async def make_http_request(url: str, data: dict):
@@ -154,7 +124,6 @@ async def get_favicon():
 async def init(request: Request):
     '''
     Load page to set call settings
-    Root page => before anything happens
     '''
     # get phonebook from db
     with get_db_connection() as conn:
@@ -178,7 +147,6 @@ async def init(request: Request):
 async def init(request: Request, number: str = Form(), recipient: str = Form(), context: str = Form()):
     '''
     Load page to set call settings
-    Handles the press to call
     '''
 
     # save call to db [TODO]
@@ -222,7 +190,6 @@ async def questions(request: Request, call_id: str):
 async def questions(request: Request, call_id: str = Form()):
     '''
     Page to view call history
-    This is the function that runs when the user submits the answers to questions
     '''
     body = await request.form()
     print("printing body")

@@ -5,18 +5,18 @@
 <div class="row">
     <div class="col">
         <!-- call container -->
-        <div class="center-questions">
+        <div class="center-questions" style="overflow-y: auto;">
             <h5 style="text-align: center;">Just a few more steps</h5>
             <hr>
             <form action="/questions" method="POST">
                 <input type="hidden" name="call_id" value="{{call_id}}">
-                {% for i in [1,2,3] %}
+                {% for i in questions %}
                 <div class="row mb-3">
                     <div class="col">
-                        <textarea type="tel" class="form-control" id="number" name="number" disabled>Question {{i}}</textarea>
+                        <textarea type="tel" class="form-control" id="{{i}}" name="{{i}}" disabled>{{i}}</textarea>
                     </div>
                     <div class="col">
-                        <textarea type="text" class="form-control" id="recipient" name="recipient" placeholder="Response" required></textarea>
+                        <textarea type="text" class="form-control" id="answer-{{loop.index}}" name="{{i}}" placeholder="Answer" required></textarea>
                     </div>
                 </div>
                 {% endfor %}

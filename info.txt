@@ -1,0 +1,10 @@
+Account number: 123123
+Phone number: 9495016532
+Full name: anshul paul
+Email address: anshulpaul@berkeley.edu
+Date of Birth: 01-30-2002
+Home address: 18 silkgrass
+Social security number: NA
+Previous order number: NA
+Preferred method of contact: NA
+Issue or concern at hand: NA
