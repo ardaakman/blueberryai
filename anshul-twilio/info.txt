@@ -1,0 +1,8 @@
+Account number: 123123
+Full name: Anshul Paul
+Address: 18 Silkgrass
+Phone number: 9495016532
+Date of birth: 01 30 2002
+Reason for cancellation: not using
+Last day of gym usage: idk
+Any outstanding balances: idk
