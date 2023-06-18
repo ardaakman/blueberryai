@@ -12,10 +12,10 @@ from helper_funcitons import *
 # Load environment variables from .env file
 load_dotenv()
 
+recordings = []
+recording_chunks = False
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-record_seconds = 7
-number_of_times_so_far = 0
 # Twilio account credentials
 account_sid = os.getenv("ACCOUNT_SID")
 auth_token = os.getenv("AUTH_TOKEN")
@@ -48,13 +48,16 @@ def outbound_call():
 
 @app.route("/conversation", methods=['POST'])
 def conversation():
-    current_time = time.time()
-    recording_url = request.values.get('RecordingUrl', None)
+    global recordings
+    print(recordings)
+    with open('voice_detection.txt', 'w') as file:
+        file.write('')  # Empty the file content
     response = VoiceResponse()
-    if recording_url:
-        recording_url = requests.get(recording_url, stream=True)
-        recipient_message, text = handle_recording_input(recording_url)
-        current_time = time.time()
+    if recordings:
+        print("Dealing with the recording.")
+        combined_audio = combine_audios(recordings, "outputs/output_{}.mp3".format(count_files_in_directory("./outputs")))
+        recordings = []
+        recipient_message, text = handle_recording_input(combined_audio)
         if len(text) > 0:
             response.pause()
             if "bye" in text.lower():
@@ -69,45 +72,54 @@ def conversation():
                 start = response.start()
                 start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/ws')
                 response.play(recipient_message)    
-                current_time = time.time()
                 stop = response.stop()
                 stop.stream()
-    
-    response.record(max_length=20, timeout=3, action='/conversation', play_beep=False, trim='trim-silence')
+    # start = response.start()
+    # start.stream(url='wss://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/audio_detection')
+    # Streaming is complicated.
+    response.record(max_length=5, timeout=2, play_beep=False, action="./handle_recording", trim='trim-silence')
     return str(response)
 
 
-def handle_recording_input(response):
-    current_time = time.time()
-    num_files = count_files_in_directory(CURRENT_DIR + "/outputs")
-    # Ensure the request is successful
-    if response.status_code == 200:
-        # Open the file in write-binary mode and write the response content to it
-        with open('outputs/output_{}.mp3'.format(num_files), 'wb') as file:
-            for chunk in response.iter_content(chunk_size=1024):
-                file.write(chunk)
+@app.route("/handle_recording", methods=['POST'])
+def handle_recording():
+    global recording_chunks
+    global recordings
+    # This will be triggered by Twilio once the audio recording is finished
+    # Here you can handle the recorded audio and control the next step of the conversation
+    voice_not_detected = False
+    with open('voice_detection.txt', 'r') as file:
+        voice_not_detected = file.read() == 'yes'
+    response = VoiceResponse()
+    if voice_not_detected:
+        response.redirect("./conversation")
     else:
-        print('Failed to download the file.')
-    upload_file_to_wasabi(CURRENT_DIR + "/outputs/output_{}.mp3".format(num_files), "blueberryai-input")
-    url_to_play, text = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{}.mp3".format(num_files))
+        # Continue chunking.
+        url = request.values.get('RecordingUrl', None)
+        recordings.append(url)
+        print(url)
+        print("Done with recording this one.")
+        speech_detected = detect_speech_with_noise_reduction(url)
+        if (speech_detected):
+            response.redirect("./conversation")
+        response.record(max_length=5, timeout=2, action='/handle_recording', play_beep=False, trim='trim-silence')
+    
+    return str(response)
+
+def handle_recording_input(file_path):
+    num_files = count_files_in_directory(CURRENT_DIR + "/outputs")
+
+    # Ensure the file exists
+    if os.path.exists(file_path):
+        # Upload the file to Wasabi
+        upload_file_to_wasabi(file_path, "blueberryai-input")
+        url_to_play, text = process_recording("https://s3.us-west-1.wasabisys.com/blueberryai-input/output_{}.mp3".format(num_files-1))
+    else:
+        print('File does not exist.')
+        url_to_play, text = None, None
 
     return url_to_play, text
 
-# def handle_recording():
-#     global number_of_times_so_far
-#     resp= VoiceResponse()
-#     if (number_of_times_so_far == 7):
-#         resp.redirect("/handle_ending")
-#     resp= VoiceResponse()
-#     # Get the data from the FastAPI application
-#     response = requests.get('https://c429-2607-f140-400-a034-a957-e34-ef52-36e6.ngrok-free.app/get_data')
-#     data_received = response.json()
-#     print(f"Data received from WebSocket: {data_received}")
-#     number_of_times_so_far += 1
-#     resp.redirect('/conversation')
-#     #Try using the recording url from wasabi to create a response.
-
-#     return str(resp)
 
 @app.route("/handle_ending", methods=['POST'])
 def handle_ending():

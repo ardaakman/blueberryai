@@ -1,9 +1,16 @@
 import json
+import tempfile
 import requests
 import boto3
 import requests
 import os, sys
 from dotenv import load_dotenv
+from pydub import AudioSegment
+import numpy as np
+import  speech_recognition as sr
+import noisereduce as nr
+import soundfile as sf
+import io
 
 import openai
 
@@ -32,7 +39,7 @@ load_dotenv()
     count_files_in_directory --> Count number of files in a directory, to set the name of the new file name.
 """
 
-async def upload_file_to_wasabi(file_path, bucket_name):
+def upload_file_to_wasabi(file_path, bucket_name):
     s3 = boto3.client('s3',
                       endpoint_url='https://s3.us-west-1.wasabisys.com',  # Use the correct endpoint URL for your Wasabi region
                       aws_access_key_id='6UQ6BKLP89DNA5G37191',  # Replace with your access key
@@ -46,6 +53,80 @@ async def upload_file_to_wasabi(file_path, bucket_name):
     except Exception as e:
         print("Something went wrong: ", e)
 
+def combine_audios(audio_urls, output_filename):
+    # Initialize an empty AudioSegment object
+    output_audio = AudioSegment.empty()
+
+    # Iterate over each audio URL and download it to memory
+    audio_segments = []
+    for audio_url in audio_urls:
+        response = requests.get(audio_url)
+        audio_bytes = io.BytesIO(response.content)
+        audio_segment = AudioSegment.from_file(audio_bytes)
+        audio_segments.append(audio_segment)
+
+    # Concatenate the audio segments into a single output AudioSegment
+    for audio_segment in audio_segments:
+        output_audio += audio_segment
+
+    # Export the output AudioSegment to a new audio file locally
+    output_audio.export(output_filename, format="mp3")
+
+    return output_filename
+
+def detect_speech_with_noise_reduction(audio_url):
+    # Download the audio file from the URL
+    response = requests.get(audio_url)
+    with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+        temp_file.write(response.content)
+        temp_file.flush()
+
+        # Load the downloaded audio file
+        audio_data, sample_rate = sf.read(temp_file.name)
+
+        # Apply noise reduction
+        # reduced_noise = nr.reduce_noise(y=audio_data, sr=sample_rate)
+
+        # Save the reduced noise audio to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as noise_reduced_file:
+            sf.write(noise_reduced_file.name, audio_data, sample_rate)
+            noise_reduced_file.flush()
+
+            # Perform speech recognition on the reduced noise audio
+            recognizer = sr.Recognizer()
+            with sr.AudioFile(noise_reduced_file.name) as source:
+                audio = recognizer.record(source)
+
+            try:
+                text = recognizer.recognize_google(audio)
+                print("Speech detected!")
+                print("Transcribed text:", text)
+                return True
+            except sr.UnknownValueError:
+                print("No speech detected.")
+                return False
+
+# def combine_audios(audio_urls):
+#     combined = AudioSegment.empty()
+    
+#     for url in audio_urls:
+#         # Download the audio file from the URL
+#         response = requests.get(url)
+#         file_name = "temp_audio.mp3"
+        
+#         with open(file_name, 'wb') as file:
+#             file.write(response.content)
+            
+#         # Load audio file
+#         audio = AudioSegment.from_mp3(file_name)
+
+#         # Append audio file to combined audio
+#         combined += audio
+
+#     # Export combined audio file
+#     num_files = count_files_in_directory("./outputs")
+#     combined.export("outputs/output_{}.mp3".format(num_files), format='mp3')
+#     return "outputs/output_{}.mp3".format(num_files)
 
 def get_url_recording(url):
     response = requests.get(url, stream=True)
