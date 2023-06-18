@@ -113,6 +113,15 @@ body {
     width: 95%;
 }
 
+.chat-bubble-large {
+    width:90%;
+    margin: 0 auto;
+    margin-top:1rem;
+    background-color: rgb(223, 223, 223);
+    border-radius: 10px;
+    padding:.6rem;
+}
+
 .chat-bubble {
     width:50%;
     border-radius: 10px;

@@ -1,10 +1,13 @@
-from fastapi import FastAPI, APIRouter, Request, Form
+import asyncio
+from fastapi import FastAPI, APIRouter, Request, Form, WebSocket, WebSocketDisconnect
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
-from pathlib import Path
+from fastapi.websockets import WebSocket
 
+from pathlib import Path
 from utils import *
+import json
 
 app = FastAPI()
 
@@ -89,15 +92,46 @@ async def questions(request: Request, call_id: str = Form()):
 async def call(request: Request, call_id: str):
     '''
     Page to view ongoinng call
-    '''
+    ''' 
 
     return TEMPLATES.TemplateResponse(
         "chat.html",
         {
             "request": request,
-            "page": "call"
+            "page": "call",
+            'call_id': call_id
         }
     )
+
+# SOCKETS
+sockets = []
+async def send_data_to_clients(data):
+    # Iterate over each connected websocket
+    for websocket in sockets:
+        try:
+            data = json.dumps(data)
+            await websocket.send_text(data)
+        except Exception:
+            # Handle any errors that occur while sending data
+            pass
+
+
+@app.websocket("/websocket")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    
+    # Append the connected websocket to the 'sockets' list
+    sockets.append(websocket)
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+
+            # Send the received data to all connected clients
+            await send_data_to_clients(data)
+    except WebSocketDisconnect:
+        print("client disconnected")
+        sockets.remove(websocket)
 
 
 @app.get("/account", response_class=HTMLResponse)
@@ -112,3 +146,41 @@ async def history(request: Request):
         }
     )
 
+
+# end call
+@app.post("/end_call")
+async def end_call(request: Request):
+    '''
+    End call
+    '''
+    # try:
+    body = await request.json()
+    call_id = body['call_id']
+
+    print('ending call' + call_id)
+    
+    # add message
+    return {'status': 'success'}
+    # except Exception as e:
+    #     print(e)
+    #     return {'status': 'failed'}
+
+
+# add message
+@app.post("/send_message")
+async def add_message(request: Request):
+    '''
+    End call
+    '''
+    # try:
+    body = await request.json()
+    call_id = body['call_id']
+    message = body['message']
+    
+    print('sending message' + message)
+    # add message
+
+    return {'status': 'success'}
+    # except Exception as e:
+    #     print(e)
+    #     return {'status': 'failed'}
