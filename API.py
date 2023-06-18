@@ -74,19 +74,17 @@ class Chat:
         self.history.append({'role': role, 'content': message})
 
     def generate(self):
-        try:
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=self.history,
-            )
-            value = completion.choices[0].message['content']
-            print(value)
-            return value
-        except:
-            return "Sorry, I don't understand. Can you repeat that?"
+        # try:
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=self.history,
+        )
+        value = completion.choices[0].message['content']
+        print(value)
+        return value
+        # except:
+        #     return "Sorry, I don't understand. Can you repeat that?"
 
-    def stream(self, socket):
-        return True
     
 class Call:
     def __init__(self, call_id):
@@ -130,10 +128,10 @@ class Call:
         client = Client(account_sid, auth_token)
         to = self.recipient
         to = "9495016532"
+        ngrog = "https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app"
         call = client.calls.create(
-            # url='https://handler.twilio.com/twiml/EH9c51bf5611bc2091f8d417b4ff44d104',
-            url=f'''https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo/{self.call_id}''',
-            # url=f'''https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo''',
+            # url=f'''https://fe8f-2607-f140-400-a011-20c1-f322-4b13-4bc9.ngrok-free.app/convo/{self.call_id}''',
+            url=f'''{ngrog}/conversation/{self.call_id}''',
             to="+1" + to,
             from_="+18777192546"
         )
@@ -367,7 +365,7 @@ async def save_message(request: Request):
     # save to db
     call = Call(call_id)
     call.chat.add(message, sender)
-    response_val = call.chat.generate(message)
+    response_val = call.chat.generate()
 
     # send caller response
     data = {"message": response_val, "call_id": call_id, "sender": 'caller'}

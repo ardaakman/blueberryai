@@ -41,7 +41,6 @@ def convo(call_id: str):
         if len(text) > 0:
             response.pause()
             value = save_message(call_id, text, 'callee') # value = chat.generate() [TODO]
-            value = "Hello, how can I help you?"
             if "bye" in value.lower():
                 response.say(value)
                 response.hangup()
@@ -58,7 +57,7 @@ def convo(call_id: str):
     response.record(max_length=20, timeout=3, action=f'/convo/{call_id}', play_beep=False, trim='trim-silence')
     return str(response)
 
-def save_message(call_id, message, sender):
+def save_message(call_id, message, sender='callee'):
     print('save_message')
     url = "http://127.0.0.1:8201/save_message"
     data = {"message": message, "sender": sender, "call_id": call_id}
