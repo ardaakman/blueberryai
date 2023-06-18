@@ -147,10 +147,19 @@ def count_files_in_directory(directory):
     return len([f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))])
 
 """ Functions to help out with Humes API calls for speech to text."""
-def convert_speech_to_text(recording_url):
-    return convert_speech_to_text_whisper(recording_url)
+def convert_speech_to_text(recording_locn):
+    if os.path.isfile(recording_locn):
+        return convert_speech_to_text_whisper_local(recording_locn)
+    else:
+        raise Exception("File does not exist")
     
-def convert_speech_to_text_whisper(recording_url):
+def convert_speech_to_text_whisper_local(local_file_path):
+    # Transcribe the audio using Whisper API
+    with open(local_file_path, "rb") as file:
+        transcript = openai.Audio.transcribe("whisper-1", file)
+    return transcript.text
+    
+def convert_speech_to_text_whisper_url(recording_url):
     # Download the audio file from the URL
     response = requests.get(recording_url)
     print(recording_url)
