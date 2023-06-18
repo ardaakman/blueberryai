@@ -13,7 +13,7 @@ class CallHandler():
     def __init__(self, call_id):
         self.call_id = call_id
         
-        self.recipient, self.task_context = self.retrieve_task_and_recipient(self.call_id)
+        self.recipient, self.task_context = self.retrieve_task_and_recipient_from_db(self.call_id)
         
         self.context_manager = ContextManager()
         self.context_manager.sync_to_database(call_id)
