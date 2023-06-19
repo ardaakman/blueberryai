@@ -1,3 +1,6 @@
+## Video Demo
+https://youtu.be/95xvfj3fRaI
+
 ## Inspiration
 Phone calls are annoying, yet a lot of companies still operate with customer service call centers. We wait minutes on end to get trivial tasks done, whether it's opening a new account with Xfinity or scheduling an appointment with your hospital. BlueberryAI is a personal AI secretary that makes calls for you, saving you time and effort. Blueberry could call any number and handle any task.
 
